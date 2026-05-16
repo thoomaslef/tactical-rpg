@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tactical RPG — Prototype</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #0b0d12; color: #e6e8ee; font-family: 'Segoe UI', Tahoma, sans-serif; }
+      #app { position: relative; width: 100vw; height: 100vh; }
+      #game { position: absolute; inset: 0; }
+      #hud {
+        position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%);
+        display: flex; gap: 12px; align-items: center;
+        background: rgba(14,18,26,.92); border: 1px solid #2a3142; border-radius: 12px;
+        padding: 10px 14px; backdrop-filter: blur(6px); z-index: 10;
+        box-shadow: 0 10px 30px rgba(0,0,0,.5);
+      }
+      .stats { display: flex; gap: 10px; align-items: center; padding-right: 10px; border-right: 1px solid #2a3142; }
+      .stat { display: flex; flex-direction: column; align-items: center; min-width: 56px; }
+      .stat .label { font-size: 11px; letter-spacing: 1px; color: #8b93a7; text-transform: uppercase; }
+      .stat .value { font-size: 18px; font-weight: 700; }
+      .stat.hp .value { color: #ef4444; }
+      .stat.pa .value { color: #38bdf8; }
+      .stat.pm .value { color: #22c55e; }
+      .spells { display: flex; gap: 8px; }
+      .spell {
+        position: relative;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        width: 64px; height: 64px; border-radius: 10px;
+        background: linear-gradient(180deg, #1c2230, #131826);
+        border: 1px solid #2a3142; cursor: pointer; user-select: none;
+        transition: transform .08s ease, border-color .15s ease, box-shadow .15s ease;
+      }
+      .spell:hover { border-color: #4a5775; transform: translateY(-2px); }
+      .spell.active { border-color: #38bdf8; box-shadow: 0 0 0 2px rgba(56,189,248,.25), 0 0 20px rgba(56,189,248,.35); }
+      .spell.disabled { opacity: .45; cursor: not-allowed; }
+      .spell .icon { font-size: 24px; }
+      .spell .cost { position: absolute; top: 2px; right: 4px; font-size: 11px; color: #38bdf8; font-weight: 700; }
+      .spell .name { font-size: 10px; color: #c2c8d5; margin-top: 2px; letter-spacing: .3px; }
+      .turn-btn {
+        margin-left: 8px; padding: 10px 14px; border-radius: 10px; cursor: pointer;
+        background: linear-gradient(180deg, #ef4444, #b91c1c); color: white; border: 0;
+        font-weight: 700; letter-spacing: .5px; font-size: 13px;
+      }
+      .turn-btn:hover { filter: brightness(1.1); }
+      #turnInfo {
+        position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+        background: rgba(14,18,26,.92); border: 1px solid #2a3142; border-radius: 999px;
+        padding: 8px 18px; font-size: 13px; font-weight: 600; letter-spacing: .5px;
+        z-index: 10;
+      }
+      #log {
+        position: absolute; top: 16px; right: 16px; width: 280px; max-height: 220px;
+        overflow-y: auto; background: rgba(14,18,26,.85); border: 1px solid #2a3142;
+        border-radius: 10px; padding: 10px 12px; font-size: 12px; line-height: 1.5;
+        z-index: 10;
+      }
+      #log .entry { color: #c2c8d5; margin-bottom: 3px; }
+      #log .entry.dmg { color: #fca5a5; }
+      #log .entry.sys { color: #38bdf8; }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div id="game"></div>
+      <div id="turnInfo">Tour 1 — Archer</div>
+      <div id="log"></div>
+      <div id="hud">
+        <div class="stats">
+          <div class="stat hp"><span class="label">PV</span><span class="value" id="hp">50</span></div>
+          <div class="stat pa"><span class="label">PA</span><span class="value" id="pa">6</span></div>
+          <div class="stat pm"><span class="label">PM</span><span class="value" id="pm">3</span></div>
+        </div>
+        <div class="spells" id="spells"></div>
+        <button class="turn-btn" id="endTurn">FIN DE TOUR</button>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
