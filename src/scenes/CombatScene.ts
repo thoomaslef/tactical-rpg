@@ -33,7 +33,7 @@ export class CombatScene extends Phaser.Scene {
     super('CombatScene');
   }
 
-  create() {
+  create(data?: { portraits?: Record<string, string> }) {
     this.cameras.main.setBackgroundColor('#0e1320');
     this.originX = this.scale.width / 2;
     this.originY = 120;
@@ -70,6 +70,8 @@ export class CombatScene extends Phaser.Scene {
       this.originY = 120;
       this.redrawAll();
     });
+
+    if (data?.portraits) this.hud.setPortraits(data.portraits);
 
     this.startTurn();
     this.hud.log('Combat engagé. À toi de jouer !', 'sys');

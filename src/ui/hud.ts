@@ -9,6 +9,10 @@ export class HUD {
   private turnEl = document.getElementById('turnInfo')!;
   private logEl = document.getElementById('log')!;
   private endTurnEl = document.getElementById('endTurn') as HTMLButtonElement;
+  private heroPortraitEl = document.getElementById('portrait-hero') as HTMLImageElement | null;
+  private enemyPortraitEl = document.getElementById('portrait-enemy') as HTMLImageElement | null;
+  private heroPanelEl = document.getElementById('panel-hero') as HTMLElement | null;
+  private enemyPanelEl = document.getElementById('panel-enemy') as HTMLElement | null;
   private activeSpellId: string | null = null;
   private currentUnit: Unit | null = null;
 
@@ -50,6 +54,17 @@ export class HUD {
       const disabled = unit.team !== 'player' || unit.pa < sp.cost;
       e.classList.toggle('disabled', disabled);
     });
+  }
+
+  setPortraits(portraits: Record<string, string>) {
+    if (portraits.hero && this.heroPortraitEl && this.heroPanelEl) {
+      this.heroPortraitEl.src = portraits.hero;
+      this.heroPanelEl.style.display = 'flex';
+    }
+    if (portraits.enemy && this.enemyPortraitEl && this.enemyPanelEl) {
+      this.enemyPortraitEl.src = portraits.enemy;
+      this.enemyPanelEl.style.display = 'flex';
+    }
   }
 
   setTurn(turn: number, name: string, team: 'player' | 'enemy') {
