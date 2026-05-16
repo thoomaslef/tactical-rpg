@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 
 const PROMPTS = {
   hero: 'pixel art archer hero character portrait, blue outfit, bow and quiver, dofus RPG style, fantasy, clean face, dark background, square portrait',
-  enemy: 'pixel art monster creature portrait, red furry bouftou ram beast, dofus RPG style, fantasy, menacing face, dark background, square portrait'
+  enemy: 'pixel art monster creature portrait, red furry enemy beast, dofus RPG style, fantasy, menacing face, dark background, square portrait'
 };
 
 export function pollinationsUrl(prompt: string, seed = 12) {

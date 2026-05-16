@@ -8,7 +8,7 @@ export const SPELLS: Record<string, Spell> = {
     cost: 3,
     range: 7,
     minRange: 1,
-    damage: 14,
+    damage: 10,
     description: 'Flèche simple — 14 dégâts, portée 7.'
   },
   explosive: {

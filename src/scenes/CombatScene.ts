@@ -44,7 +44,7 @@ export class CombatScene extends Phaser.Scene {
 
     // Units
     const archer: Unit = this.makeUnit('hero', 'Archer', 'player', { x: 4, y: 7 }, 50, 6, 3, 12);
-    const monster: Unit = this.makeUnit('mob', 'Bouftou', 'enemy', { x: 10, y: 7 }, 60, 6, 3, 8);
+    const monster: Unit = this.makeUnit('mob', 'Ennemi', 'enemy', { x: 10, y: 7 }, 50, 6, 3, 8);
     archer.spells = [SPELLS.arrow, SPELLS.explosive, SPELLS.push];
     monster.spells = [SPELLS.arrow];
     this.units = [archer, monster];
