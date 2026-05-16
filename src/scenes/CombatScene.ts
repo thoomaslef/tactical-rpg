@@ -12,8 +12,8 @@ interface TileGfx {
 }
 
 export class CombatScene extends Phaser.Scene {
-  private originX = 0;
-  private originY = 0;
+  private get originX() { return this.scale.width / 2; }
+  private get originY() { return 120; }
   private tiles: TileGfx[] = [];
   private tileMap = new Map<string, TileGfx>();
   private units: Unit[] = [];
@@ -35,8 +35,6 @@ export class CombatScene extends Phaser.Scene {
 
   create(data?: { portraits?: Record<string, string> }) {
     this.cameras.main.setBackgroundColor('#0e1320');
-    this.originX = this.scale.width / 2;
-    this.originY = 120;
 
     this.drawGrid();
 
@@ -65,11 +63,7 @@ export class CombatScene extends Phaser.Scene {
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => this.onPointerMove(p));
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => this.onPointerDown(p));
 
-    this.scale.on('resize', () => {
-      this.originX = this.scale.width / 2;
-      this.originY = 120;
-      this.redrawAll();
-    });
+    this.scale.on('resize', () => this.redrawAll());
 
     if (data?.portraits) this.hud.setPortraits(data.portraits);
 
