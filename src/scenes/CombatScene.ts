@@ -627,8 +627,8 @@ export class CombatScene extends Phaser.Scene {
     }).setOrigin(0.5);
     panel.add([btnBg, btnTxt]);
 
-    btnBg.on('pointerover', () => btnBg.setFillColor(0x2a3248));
-    btnBg.on('pointerout', () => btnBg.setFillColor(0x1c2230));
+    btnBg.on('pointerover', () => { btnBg.fillColor = 0x2a3248; });
+    btnBg.on('pointerout', () => { btnBg.fillColor = 0x1c2230; });
     btnBg.on('pointerdown', () => {
       this.cameras.main.fadeOut(300, 0, 0, 0);
       this.time.delayedCall(320, () => {
