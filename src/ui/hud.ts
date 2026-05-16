@@ -56,6 +56,24 @@ export class HUD {
     });
   }
 
+  show() {
+    ['hud', 'turnInfo', 'log'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.visibility = 'visible';
+    });
+  }
+
+  hide() {
+    ['hud', 'turnInfo', 'log'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.visibility = 'hidden';
+    });
+    const heroPanel = document.getElementById('panel-hero');
+    const enemyPanel = document.getElementById('panel-enemy');
+    if (heroPanel) heroPanel.style.display = 'none';
+    if (enemyPanel) enemyPanel.style.display = 'none';
+  }
+
   setPortraits(portraits: Record<string, string>) {
     if (portraits.hero && this.heroPortraitEl && this.heroPanelEl) {
       this.heroPortraitEl.src = portraits.hero;

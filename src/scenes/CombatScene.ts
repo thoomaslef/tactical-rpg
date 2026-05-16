@@ -28,9 +28,18 @@ export class CombatScene extends Phaser.Scene {
   private unitLayer!: Phaser.GameObjects.Container;
   private reachable: Map<string, { dist: number; prev: string | null }> = new Map();
   private busy = false;
+  private playerXP = 0;
+  private damageDealt = 0;
+  private turnsUsed = 0;
 
   constructor() {
     super('CombatScene');
+  }
+
+  init(data: { xp?: number }) {
+    this.playerXP = data?.xp ?? 0;
+    this.damageDealt = 0;
+    this.turnsUsed = 0;
   }
 
   create(data?: { portraits?: Record<string, string> }) {
@@ -65,6 +74,7 @@ export class CombatScene extends Phaser.Scene {
 
     this.scale.on('resize', () => this.redrawAll());
 
+    this.hud.show();
     if (data?.portraits) this.hud.setPortraits(data.portraits);
 
     this.startTurn();
@@ -204,6 +214,7 @@ export class CombatScene extends Phaser.Scene {
 
   private advanceTurn() {
     this.clearHighlights();
+    this.turnsUsed++;
     this.turnIndex = (this.turnIndex + 1) % this.turnOrder.length;
     if (this.turnIndex === 0) this.turnNumber++;
     if (this.checkWinLose()) return;
@@ -422,6 +433,7 @@ export class CombatScene extends Phaser.Scene {
       this.popDamage(v, dmg);
       this.updateHpBar(v);
       this.hud.log(`${v.name} subit ${dmg} dégâts`, 'dmg');
+      if (v.team === 'enemy') this.damageDealt += dmg;
     };
 
     if (spell.aoe) {
@@ -539,25 +551,99 @@ export class CombatScene extends Phaser.Scene {
     if (player.hp <= 0) {
       this.busy = true;
       this.hud.log('Défaite…', 'sys');
-      this.showResult('DÉFAITE', 0xef4444);
+      this.time.delayedCall(600, () => this.showResult(false));
       return true;
     }
     if (enemy.hp <= 0) {
       this.busy = true;
       this.hud.log('Victoire !', 'sys');
-      this.showResult('VICTOIRE', 0x22c55e);
+      this.time.delayedCall(600, () => this.showResult(true));
       return true;
     }
     return false;
   }
 
-  private showResult(text: string, color: number) {
-    const w = this.scale.width, h = this.scale.height;
-    const overlay = this.add.rectangle(w / 2, h / 2, w, h, 0x000000, 0.55).setDepth(10000);
-    const t = this.add.text(w / 2, h / 2, text, {
-      fontSize: '64px', color: '#fff', fontStyle: 'bold',
-      stroke: '#000', strokeThickness: 6
-    }).setOrigin(0.5).setDepth(10001);
-    t.setTint(color);
+  private showResult(victory: boolean) {
+    const W = this.scale.width, H = this.scale.height;
+    const xpGain = victory ? 100 : 0;
+    const newXP = this.playerXP + xpGain;
+
+    // Overlay
+    this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.65).setDepth(10000);
+
+    // Panel
+    const panelW = 340, panelH = 280;
+    const panel = this.add.container(W / 2, H / 2).setDepth(10001);
+
+    const bg = this.add.rectangle(0, 0, panelW, panelH, 0x0e1320, 1)
+      .setStrokeStyle(2, victory ? 0x22c55e : 0xef4444);
+    panel.add(bg);
+
+    // Titre
+    const titleColor = victory ? '#22c55e' : '#ef4444';
+    const titleText = victory ? '✦ VICTOIRE ✦' : '✗ DÉFAITE ✗';
+    const title = this.add.text(0, -100, titleText, {
+      fontSize: '28px', color: titleColor, fontStyle: 'bold',
+      stroke: '#000', strokeThickness: 5
+    }).setOrigin(0.5);
+    panel.add(title);
+
+    // Stats
+    const stats = [
+      { label: 'Dégâts infligés', value: `${this.damageDealt}`, color: '#fca5a5' },
+      { label: 'Tours joués', value: `${Math.ceil(this.turnsUsed / 2)}`, color: '#e6e8ee' },
+    ];
+    stats.forEach((s, i) => {
+      const y = -40 + i * 34;
+      panel.add(this.add.text(-120, y, s.label, { fontSize: '13px', color: '#8b93a7' }).setOrigin(0, 0.5));
+      panel.add(this.add.text(120, y, s.value, { fontSize: '15px', color: s.color, fontStyle: 'bold' }).setOrigin(1, 0.5));
+      // Séparateur
+      const line = this.add.graphics();
+      line.lineStyle(1, 0x2a3142, 1);
+      line.lineBetween(-120, y + 16, 120, y + 16);
+      panel.add(line);
+    });
+
+    // XP gain
+    if (victory) {
+      const xpBg = this.add.rectangle(0, 52, 200, 36, 0x14532d, 1).setStrokeStyle(1, 0x22c55e);
+      const xpTxt = this.add.text(0, 52, `+ ${xpGain} XP`, {
+        fontSize: '20px', color: '#4ade80', fontStyle: 'bold', stroke: '#000', strokeThickness: 3
+      }).setOrigin(0.5);
+      panel.add([xpBg, xpTxt]);
+
+      // XP pop animation
+      this.tweens.add({ targets: xpTxt, y: 44, duration: 600, ease: 'Back.easeOut', delay: 300 });
+      this.tweens.add({ targets: xpBg, scaleX: 1.08, scaleY: 1.08, yoyo: true, repeat: 2, duration: 200, delay: 300 });
+    }
+
+    // Bouton retour
+    const btnY = 106;
+    const btnBg = this.add.rectangle(0, btnY, 200, 40, 0x1c2230, 1)
+      .setStrokeStyle(1, victory ? 0x22c55e : 0x4a5775)
+      .setInteractive({ cursor: 'pointer' });
+    const btnTxt = this.add.text(0, btnY, '↩ Retour à la carte', {
+      fontSize: '13px', color: '#e6e8ee', fontStyle: 'bold'
+    }).setOrigin(0.5);
+    panel.add([btnBg, btnTxt]);
+
+    btnBg.on('pointerover', () => btnBg.setFillColor(0x2a3248));
+    btnBg.on('pointerout', () => btnBg.setFillColor(0x1c2230));
+    btnBg.on('pointerdown', () => {
+      this.cameras.main.fadeOut(300, 0, 0, 0);
+      this.time.delayedCall(320, () => {
+        // Reset HUD panels
+        const heroPanel = document.getElementById('panel-hero');
+        const enemyPanel = document.getElementById('panel-enemy');
+        if (heroPanel) heroPanel.style.display = 'none';
+        if (enemyPanel) enemyPanel.style.display = 'none';
+        this.scene.start('MapScene', { xp: newXP });
+      });
+    });
+
+    // Entrée animée du panel
+    panel.setScale(0.7);
+    panel.setAlpha(0);
+    this.tweens.add({ targets: panel, scaleX: 1, scaleY: 1, alpha: 1, duration: 350, ease: 'Back.easeOut' });
   }
 }
