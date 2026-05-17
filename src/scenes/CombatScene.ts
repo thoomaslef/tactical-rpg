@@ -150,7 +150,7 @@ export class CombatScene extends Phaser.Scene {
     for (const u of this.units) {
       if (!u.sprite) continue;
       const { x, y } = gridToIso(u.pos.x, u.pos.y, this.originX, this.originY);
-      u.sprite.setPosition(x, y - 18);
+      u.sprite.setPosition(x, y - 14);
     }
     this.depthSort();
     this.clearHighlights();
@@ -160,7 +160,7 @@ export class CombatScene extends Phaser.Scene {
 
   private spawnUnitSprite(u: Unit) {
     const { x, y } = gridToIso(u.pos.x, u.pos.y, this.originX, this.originY);
-    const c = this.add.container(x, y - 18);
+    const c = this.add.container(x, y - 14);
     // shadow
     const shadow = this.add.ellipse(0, 18, 36, 14, 0x000000, 0.4);
     // body
@@ -412,7 +412,7 @@ export class CombatScene extends Phaser.Scene {
       const { x, y } = gridToIso(next.x, next.y, this.originX, this.originY);
       this.tweens.add({
         targets: u.sprite,
-        x, y: y - 18,
+        x, y: y - 14,
         duration: 140,
         ease: 'Sine.easeInOut',
         onUpdate: () => this.depthSort(),
@@ -524,7 +524,7 @@ export class CombatScene extends Phaser.Scene {
           victim.pos = { x: nx, y: ny };
           if (victim.sprite) {
             const { x, y } = gridToIso(nx, ny, this.originX, this.originY);
-            this.tweens.add({ targets: victim.sprite, x, y: y - 18, duration: 220, ease: 'Quad.easeOut', onUpdate: () => this.depthSort() });
+            this.tweens.add({ targets: victim.sprite, x, y: y - 14, duration: 220, ease: 'Quad.easeOut', onUpdate: () => this.depthSort() });
           }
         }
       }
