@@ -63,6 +63,11 @@ export class CombatScene extends Phaser.Scene {
     this.monsterId = data?.monsterId ?? '';
     this.damageDealt = 0;
     this.turnsUsed = 0;
+    this.busy = false;
+    this.mode = 'idle';
+    this.activeSpell = null;
+    this.hoverPoly = null;
+    this.hoverAoePolys = [];
   }
 
   create(data?: { portraits?: Record<string, string> }) {
