@@ -324,7 +324,7 @@ export class CombatScene extends Phaser.Scene {
     for (const ap of this.hoverAoePolys) ap.destroy();
     this.hoverAoePolys = [];
 
-    const { x, y } = isoToGrid(p.worldX, p.worldY, this.originX, this.originY);
+    const { x, y } = isoToGrid(p.x, p.y, this.originX, this.originY);
     if (!inBounds(x, y)) return;
 
     if (this.mode === 'move') {
@@ -352,7 +352,7 @@ export class CombatScene extends Phaser.Scene {
   private onPointerDown(p: Phaser.Input.Pointer) {
     if (this.busy) return;
     if (this.currentUnit().team !== 'player') return;
-    const { x, y } = isoToGrid(p.worldX, p.worldY, this.originX, this.originY);
+    const { x, y } = isoToGrid(p.x, p.y, this.originX, this.originY);
     if (!inBounds(x, y)) return;
 
     if (this.mode === 'move') {
