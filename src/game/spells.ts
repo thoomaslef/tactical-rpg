@@ -6,32 +6,34 @@ export const SPELLS: Record<string, Spell> = {
     name: 'Flèche',
     icon: '🏹',
     cost: 3,
+    fluideCost: 3,
     range: 7,
     minRange: 1,
     damage: 10,
-    description: 'Flèche simple — 14 dégâts, portée 7.'
+    description: 'Inflige 10 dégâts à portée 7. Sort de base polyvalent.'
   },
   explosive: {
     id: 'explosive',
     name: 'Explosive',
     icon: '💥',
     cost: 5,
+    fluideCost: 5,
     range: 6,
     minRange: 2,
     damage: 22,
     aoe: 1,
-    description: 'Flèche explosive — 22 dégâts en zone (1), portée 6.'
+    description: 'Flèche explosive — 22 dégâts en zone de rayon 1. Portée 2–6.'
   },
   push: {
     id: 'push',
-    name: 'Recul',
+    name: 'Fl. Recul',
     icon: '💨',
-    cost: 2,
+    cost: 3,
+    fluideCost: 3,
     range: 3,
     minRange: 1,
-    damage: 6,
     push: 3,
-    description: 'Repousse l\'ennemi de 3 cases, 6 dégâts.'
+    description: 'Repousse l\'ennemi de 3 cases. Aucun dégât. Portée 3.'
   }
 };
 

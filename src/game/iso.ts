@@ -14,7 +14,7 @@ export function isoToGrid(px: number, py: number, originX: number, originY: numb
   const dy = py - originY;
   const gx = (dx / (TILE_W / 2) + dy / (TILE_H / 2)) / 2;
   const gy = (dy / (TILE_H / 2) - dx / (TILE_W / 2)) / 2;
-  return { x: Math.floor(gx), y: Math.floor(gy) };
+  return { x: Math.round(gx), y: Math.round(gy) };
 }
 
 export function manhattan(a: { x: number; y: number }, b: { x: number; y: number }) {

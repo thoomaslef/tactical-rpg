@@ -5,7 +5,9 @@ export class HUD {
   private hpEl = document.getElementById('hp')!;
   private paEl = document.getElementById('pa')!;
   private pmEl = document.getElementById('pm')!;
+  private flEl = document.getElementById('fl')!;
   private spellsEl = document.getElementById('spells')!;
+  private playerFluide = 0;
   private turnEl = document.getElementById('turnInfo')!;
   private logEl = document.getElementById('log')!;
   private endTurnEl = document.getElementById('endTurn') as HTMLButtonElement;
@@ -15,16 +17,20 @@ export class HUD {
   private enemyPanelEl = document.getElementById('panel-enemy') as HTMLElement | null;
   private activeSpellId: string | null = null;
   private currentUnit: Unit | null = null;
+  private spells: Spell[] = [];
 
   onSpellClick: (spell: Spell) => void = () => {};
   onEndTurn: () => void = () => {};
 
-  constructor() {
-    for (const s of ALL_SPELLS) {
+  constructor(spells: Spell[] = ALL_SPELLS) {
+    this.spells = spells;
+    this.spellsEl.innerHTML = '';
+    for (const s of this.spells) {
       const el = document.createElement('div');
       el.className = 'spell';
       el.dataset.id = s.id;
-      el.innerHTML = `<span class="cost">${s.cost}</span><span class="icon">${s.icon}</span><span class="name">${s.name}</span>`;
+      const fcost = s.fluideCost > 0 ? `<span class="fcost">${s.fluideCost}💧</span>` : '';
+      el.innerHTML = `<span class="cost">${s.cost}PA</span><span class="icon">${s.icon}</span><span class="name">${s.name}</span>${fcost}`;
       el.title = s.description;
       el.addEventListener('click', () => {
         if (el.classList.contains('disabled')) return;
@@ -32,7 +38,7 @@ export class HUD {
       });
       this.spellsEl.appendChild(el);
     }
-    this.endTurnEl.addEventListener('click', () => this.onEndTurn());
+    this.endTurnEl.onclick = () => this.onEndTurn();
   }
 
   setActiveSpell(id: string | null) {
@@ -43,15 +49,28 @@ export class HUD {
     });
   }
 
+  updateFluide(current: number, max: number) {
+    this.playerFluide = current;
+    this.flEl.textContent = `${current}/${max}`;
+    this.refreshSpellStates();
+  }
+
   update(unit: Unit) {
     this.currentUnit = unit;
     this.hpEl.textContent = `${unit.hp}/${unit.maxHp}`;
     this.paEl.textContent = `${unit.pa}`;
     this.pmEl.textContent = `${unit.pm}`;
+    this.refreshSpellStates();
+  }
+
+  private refreshSpellStates() {
+    const unit = this.currentUnit;
+    if (!unit) return;
     this.spellsEl.querySelectorAll('.spell').forEach((el) => {
       const e = el as HTMLElement;
-      const sp = ALL_SPELLS.find((s) => s.id === e.dataset.id)!;
-      const disabled = unit.team !== 'player' || unit.pa < sp.cost;
+      const sp = this.spells.find((s) => s.id === e.dataset.id);
+      if (!sp) return;
+      const disabled = unit.team !== 'player' || unit.pa < sp.cost || this.playerFluide < sp.fluideCost;
       e.classList.toggle('disabled', disabled);
     });
   }

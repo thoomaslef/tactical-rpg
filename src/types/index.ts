@@ -6,7 +6,8 @@ export interface Spell {
   id: string;
   name: string;
   icon: string;
-  cost: number;
+  cost: number;       // PA cost
+  fluideCost: number; // Fluide cost
   range: number;
   minRange?: number;
   damage?: number;

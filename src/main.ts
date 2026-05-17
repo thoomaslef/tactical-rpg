@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { MapScene } from './scenes/MapScene';
+import { WorldScene } from './scenes/WorldScene';
 import { PreloadScene } from './scenes/PreloadScene';
 import { CombatScene } from './scenes/CombatScene';
 
@@ -13,7 +13,7 @@ const config: Phaser.Types.Core.GameConfig = {
     height: '100%'
   },
   render: { antialias: true, pixelArt: false },
-  scene: [MapScene, PreloadScene, CombatScene]
+  scene: [WorldScene, PreloadScene, CombatScene]
 };
 
 new Phaser.Game(config);

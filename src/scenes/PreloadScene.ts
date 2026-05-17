@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { PlayerStats } from '../game/stats';
+import { PlayerEquipment, InventoryEntry, emptyEquipment } from '../game/items';
 
 const PROMPTS = {
   hero: 'pixel art archer hero character portrait, blue outfit, bow and quiver, dofus RPG style, fantasy, clean face, dark background, square portrait',
@@ -10,14 +12,28 @@ export function pollinationsUrl(prompt: string, seed = 12) {
 }
 
 export class PreloadScene extends Phaser.Scene {
-  private fromMap = false;
   private playerXP = 0;
+  private playerStats: PlayerStats | undefined;
+  private equipment: PlayerEquipment = emptyEquipment();
+  private inventory: InventoryEntry[] = [];
+  private mapId = 'village_centre';
+  private playerX = 6;
+  private playerY = 4;
+  private defeatedMonsters: string[] = [];
+  private monsterId = '';
 
   constructor() { super('PreloadScene'); }
 
-  init(data: { fromMap?: boolean; xp?: number }) {
-    this.fromMap = data?.fromMap ?? false;
+  init(data: { fromWorld?: boolean; xp?: number; playerStats?: PlayerStats; equipment?: PlayerEquipment; inventory?: InventoryEntry[]; mapId?: string; playerX?: number; playerY?: number; defeatedMonsters?: string[]; monsterId?: string }) {
     this.playerXP = data?.xp ?? 0;
+    this.playerStats = data?.playerStats ? { ...data.playerStats } : undefined;
+    this.equipment = data?.equipment ? { ...data.equipment } : emptyEquipment();
+    this.inventory = data?.inventory ? data.inventory.map(e => ({ ...e })) : [];
+    this.mapId = data?.mapId ?? 'village_centre';
+    this.playerX = data?.playerX ?? 6;
+    this.playerY = data?.playerY ?? 4;
+    this.defeatedMonsters = data?.defeatedMonsters ? [...data.defeatedMonsters] : [];
+    this.monsterId = data?.monsterId ?? '';
   }
 
   preload() {
@@ -64,7 +80,18 @@ export class PreloadScene extends Phaser.Scene {
     this.time.delayedCall(1800, () => {
       this.cameras.main.fadeOut(300, 0, 0, 0);
       this.time.delayedCall(300, () => {
-        this.scene.start('CombatScene', { portraits, xp: this.playerXP });
+        this.scene.start('CombatScene', {
+          portraits,
+          xp: this.playerXP,
+          playerStats: this.playerStats,
+          equipment: this.equipment,
+          inventory: this.inventory,
+          mapId: this.mapId,
+          playerX: this.playerX,
+          playerY: this.playerY,
+          defeatedMonsters: this.defeatedMonsters,
+          monsterId: this.monsterId,
+        });
       });
     });
   }
