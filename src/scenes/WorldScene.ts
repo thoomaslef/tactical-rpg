@@ -261,8 +261,39 @@ export class WorldScene extends Phaser.Scene {
   }
 
   /** Vrai si l'exit vers la forêt est verrouillé (quête 3 non terminée). */
-  private isExitLocked(exit: MapExit): boolean {
+  private isExitLocked(exit: { targetMap: string }): boolean {
     return exit.targetMap.startsWith('map_foret') && !gameState.quest3RewardGiven;
+  }
+
+  /** Retourne un exit basé sur les coordonnées de la map pour la bordure (gx, gy), ou null. */
+  private getCoordExit(gx: number, gy: number): { targetMap: string; targetX: number; targetY: number } | null {
+    const coords = this.mapData.coords;
+    if (!coords) return null;
+    const [cx, cy] = coords;
+    const mw = this.mapData.width  ?? DEFAULT_MAP_W;
+    const mh = this.mapData.height ?? DEFAULT_MAP_H;
+    if (gy === 1 && gx >= 1 && gx <= mw - 2) {
+      const nb = this.mapManager.getByCoords(cx, cy - 1);
+      if (nb) return { targetMap: nb.id, targetX: gx, targetY: (nb.height ?? DEFAULT_MAP_H) - 2 };
+    }
+    if (gy === mh - 2 && gx >= 1 && gx <= mw - 2) {
+      const nb = this.mapManager.getByCoords(cx, cy + 1);
+      if (nb) return { targetMap: nb.id, targetX: gx, targetY: 1 };
+    }
+    if (gx === 1 && gy >= 1 && gy <= mh - 2) {
+      const nb = this.mapManager.getByCoords(cx - 1, cy);
+      if (nb) return { targetMap: nb.id, targetX: (nb.width ?? DEFAULT_MAP_W) - 2, targetY: gy };
+    }
+    if (gx === mw - 2 && gy >= 1 && gy <= mh - 2) {
+      const nb = this.mapManager.getByCoords(cx + 1, cy);
+      if (nb) return { targetMap: nb.id, targetX: 1, targetY: gy };
+    }
+    return null;
+  }
+
+  /** Retourne n'importe quel exit (explicite ou coordonnée) sur la case (gx, gy). */
+  private getAnyExit(gx: number, gy: number): { targetMap: string; targetX: number; targetY: number } | null {
+    return this.getExitAt(gx, gy) ?? this.getCoordExit(gx, gy);
   }
 
   private getMonsterAt(x: number, y: number): MonsterSpawn | undefined {
@@ -564,51 +595,116 @@ export class WorldScene extends Phaser.Scene {
    * ou null si le pointeur est en dehors des bandes.
    */
   /**
-   * Dessine un marqueur visuel sur chaque case de sortie de la map.
-   * Flèche + surbrillance colorée directement sur la tuile en world-space.
+   * Dessine les marqueurs visuels des sorties.
+   * - Maps avec coords : bandes de bordure colorées par direction + flèche centrale.
+   * - Maps sans coords (legacy) : losange par exit explicite.
    */
   private drawExitMarkers(): void {
     const mw = this.mapData.width  ?? DEFAULT_MAP_W;
     const mh = this.mapData.height ?? DEFAULT_MAP_H;
 
-    for (const exit of this.mapData.exits) {
-      const { x: cx, y: cy } = this.tileCenter(exit.x, exit.y);
+    if (this.mapData.coords) {
+      this._drawCoordExitStrips(mw, mh);
+      // Exits explicites hors-bordure uniquement (raccourcis, téléportations)
+      for (const exit of this.mapData.exits) {
+        const onBorder = exit.x === 1 || exit.x === mw - 2 || exit.y === 1 || exit.y === mh - 2;
+        if (!onBorder) this._drawExplicitExitMarker(exit, mw, mh);
+      }
+    } else {
+      for (const exit of this.mapData.exits) {
+        this._drawExplicitExitMarker(exit, mw, mh);
+      }
+    }
+  }
 
-      // Déterminer la direction par quadrant isométrique :
-      // haut-gauche (gx<mw/2, gy<mh/2) = Nord  │  haut-droit (gx≥mw/2, gy<mh/2) = Est
-      // bas-gauche  (gx<mw/2, gy≥mh/2) = Ouest │  bas-droit  (gx≥mw/2, gy≥mh/2) = Sud
-      const halfW = mw / 2, halfH = mh / 2;
-      let arrow: string;
-      if      (exit.x <  halfW && exit.y <  halfH) arrow = '▲'; // Nord
-      else if (exit.x >= halfW && exit.y <  halfH) arrow = '▶'; // Est
-      else if (exit.x >= halfW && exit.y >= halfH) arrow = '▼'; // Sud
-      else                                          arrow = '◀'; // Ouest
+  /** Dessine des bandes de bordure pour chaque direction avec un voisin dans le registre de coords. */
+  private _drawCoordExitStrips(mw: number, mh: number): void {
+    if (!this.mapData.coords) return;
+    const [cx, cy] = this.mapData.coords;
+    const hw = this._tileW / 2;
+    const hh = this._tileH / 2;
+    const midGx = Math.floor(mw / 2);
+    const midGy = Math.floor(mh / 2);
 
-      // Losange de surbrillance
-      const locked = this.isExitLocked(exit);
-      const fillCol = locked ? 0x991b1b : 0x38bdf8;
-      const lineCol = locked ? 0xef4444 : 0x38bdf8;
-      const diamond = [
-        { x: cx,                    y: cy - this._tileH / 2 },
-        { x: cx + this._tileW / 2,  y: cy },
-        { x: cx,                    y: cy + this._tileH / 2 },
-        { x: cx - this._tileW / 2,  y: cy },
-      ];
-      const g = this.add.graphics().setDepth(cy + 1);
-      g.fillStyle(fillCol, 0.30);
-      g.fillPoints(diamond, true);
-      g.lineStyle(2, lineCol, 0.9);
-      g.strokePoints(diamond, true);
-      this.tweens.add({ targets: g, alpha: 0.15, yoyo: true, repeat: -1, duration: locked ? 1400 : 950 });
+    const dirs = [
+      { dx: 0, dy: -1, arrow: '▲', horiz: true,  bord: 1 },
+      { dx: 0, dy: +1, arrow: '▼', horiz: true,  bord: mh - 2 },
+      { dx: -1, dy: 0, arrow: '◀', horiz: false, bord: 1 },
+      { dx: +1, dy: 0, arrow: '▶', horiz: false, bord: mw - 2 },
+    ];
 
-      // Flèche ou cadenas animé au-dessus
-      const label = locked ? '🔒' : arrow;
-      const txt = this.add.text(cx, cy - this._tileH / 2 - 12, label, {
-        fontSize: '16px', color: locked ? '#fca5a5' : '#7dd3fc', fontStyle: 'bold',
+    for (const { dx, dy, arrow, horiz, bord } of dirs) {
+      const nb = this.mapManager.getByCoords(cx + dx, cy + dy);
+      if (!nb) continue;
+
+      const locked   = this.isExitLocked({ targetMap: nb.id });
+      const fillCol  = locked ? 0x991b1b : 0x0369a1;
+      const lineCol  = locked ? 0xef4444 : 0x38bdf8;
+      const label    = locked ? '🔒' : arrow;
+
+      const midPos   = horiz ? this.tileCenter(midGx, bord) : this.tileCenter(bord, midGy);
+      const g        = this.add.graphics().setDepth(midPos.y + 1);
+      g.fillStyle(fillCol, 0.22);
+      g.lineStyle(1, lineCol, 0.55);
+
+      if (horiz) {
+        for (let gx = 1; gx <= mw - 2; gx++) {
+          const { x: tx, y: ty } = this.tileCenter(gx, bord);
+          g.fillPoints([{x:tx,y:ty-hh},{x:tx+hw,y:ty},{x:tx,y:ty+hh},{x:tx-hw,y:ty}], true);
+          g.strokePoints([{x:tx,y:ty-hh},{x:tx+hw,y:ty},{x:tx,y:ty+hh},{x:tx-hw,y:ty}], true);
+        }
+      } else {
+        for (let gy = 1; gy <= mh - 2; gy++) {
+          const { x: tx, y: ty } = this.tileCenter(bord, gy);
+          g.fillPoints([{x:tx,y:ty-hh},{x:tx+hw,y:ty},{x:tx,y:ty+hh},{x:tx-hw,y:ty}], true);
+          g.strokePoints([{x:tx,y:ty-hh},{x:tx+hw,y:ty},{x:tx,y:ty+hh},{x:tx-hw,y:ty}], true);
+        }
+      }
+
+      this.tweens.add({ targets: g, alpha: 0.4, yoyo: true, repeat: -1, duration: locked ? 1400 : 950 });
+
+      const ax = midPos.x + (!horiz ? (bord === 1 ? -hw - 10 : hw + 10) : 0);
+      const ay = midPos.y + (horiz  ? (bord === 1 ? -hh - 14 : hh + 6)  : 0);
+      const txt = this.add.text(ax, ay, label, {
+        fontSize: '18px', color: locked ? '#fca5a5' : '#7dd3fc', fontStyle: 'bold',
         stroke: '#000000', strokeThickness: 3,
-      }).setOrigin(0.5).setDepth(cy + 2);
+      }).setOrigin(0.5).setDepth(midPos.y + 2);
       this.tweens.add({ targets: txt, y: txt.y - 6, yoyo: true, repeat: -1, duration: 750 });
     }
+  }
+
+  /** Dessine un losange de surbrillance pour un exit explicite (legacy ou hors-bordure). */
+  private _drawExplicitExitMarker(exit: MapExit, mw: number, mh: number): void {
+    const { x: cx, y: cy } = this.tileCenter(exit.x, exit.y);
+    const halfW = mw / 2, halfH = mh / 2;
+    let arrow: string;
+    if      (exit.x <  halfW && exit.y <  halfH) arrow = '▲';
+    else if (exit.x >= halfW && exit.y <  halfH) arrow = '▶';
+    else if (exit.x >= halfW && exit.y >= halfH) arrow = '▼';
+    else                                          arrow = '◀';
+
+    const locked  = this.isExitLocked(exit);
+    const fillCol = locked ? 0x991b1b : 0x38bdf8;
+    const lineCol = locked ? 0xef4444 : 0x38bdf8;
+    const diamond = [
+      { x: cx,                   y: cy - this._tileH / 2 },
+      { x: cx + this._tileW / 2, y: cy },
+      { x: cx,                   y: cy + this._tileH / 2 },
+      { x: cx - this._tileW / 2, y: cy },
+    ];
+    const g = this.add.graphics().setDepth(cy + 1);
+    g.fillStyle(fillCol, 0.30);
+    g.fillPoints(diamond, true);
+    g.lineStyle(2, lineCol, 0.9);
+    g.strokePoints(diamond, true);
+    this.tweens.add({ targets: g, alpha: 0.15, yoyo: true, repeat: -1, duration: locked ? 1400 : 950 });
+
+    const label = locked ? '🔒' : arrow;
+    const txt = this.add.text(cx, cy - this._tileH / 2 - 12, label, {
+      fontSize: '16px', color: locked ? '#fca5a5' : '#7dd3fc', fontStyle: 'bold',
+      stroke: '#000000', strokeThickness: 3,
+    }).setOrigin(0.5).setDepth(cy + 2);
+    this.tweens.add({ targets: txt, y: txt.y - 6, yoyo: true, repeat: -1, duration: 750 });
   }
 
   private drawDungeonDoor() {
@@ -860,7 +956,10 @@ export class WorldScene extends Phaser.Scene {
     const barH      = isMobile ? 56 : 48;
 
     this.add.rectangle(W / 2, barH / 2, W, barH, 0x0e1320, 0.92).setDepth(10000);
-    this.add.text(W / 2, barH / 2, this.mapData.zone.toUpperCase(), {
+    const coordSuffix = this.mapData.coords
+      ? `  (${this.mapData.coords[0]}, ${this.mapData.coords[1]})`
+      : '';
+    this.add.text(W / 2, barH / 2, this.mapData.zone.toUpperCase() + coordSuffix, {
       fontSize: isMobile ? '14px' : '15px', color: '#e6e8ee', fontStyle: 'bold', letterSpacing: 2,
     }).setOrigin(0.5).setDepth(10001);
     this.uiXpGoldText = this.add.text(W - 14, barH / 2, `✦ ${this.playerXP} XP  ·  💰 ${this.gold}`, {
@@ -1053,7 +1152,7 @@ export class WorldScene extends Phaser.Scene {
 
     const monster       = this.getMonsterAt(gx, gy);
     const hasMonster    = !!monster;
-    const hasExit       = !!this.getExitAt(gx, gy);
+    const hasExit       = !!this.getAnyExit(gx, gy);
     const hasChest      = !!this.getChestAt(gx, gy);
     const hasNPC        = !!this.getNPCAt(gx, gy);
     const hasDoorHere   = this.mapData.dungeonDoor?.x === gx && this.mapData.dungeonDoor?.y === gy;
@@ -1106,7 +1205,7 @@ export class WorldScene extends Phaser.Scene {
     if (!this.inBounds(gx, gy)) return;
 
     // 0. Case de sortie de map
-    const exitTile = this.getExitAt(gx, gy);
+    const exitTile = this.getAnyExit(gx, gy);
     if (exitTile) {
       if (gx === this.playerX && gy === this.playerY) {
         this.triggerTransition(exitTile);
@@ -1442,7 +1541,6 @@ export class WorldScene extends Phaser.Scene {
         this.inventory = this.inventory.filter(e => e.id !== door.requiredItem);
       }
       this.triggerTransition({
-        x: door.x, y: door.y,
         targetMap: door.targetMap,
         targetX: door.targetX,
         targetY: door.targetY,
@@ -1523,7 +1621,7 @@ export class WorldScene extends Phaser.Scene {
           this.tryDungeonDoor(door);
           return;
         }
-        const exit = this.getExitAt(this.playerX, this.playerY);
+        const exit = this.getAnyExit(this.playerX, this.playerY);
         if (exit) { this.triggerTransition(exit); return; }
         return; // fin de chemin normale
       }
@@ -1547,7 +1645,7 @@ export class WorldScene extends Phaser.Scene {
             return;
           }
           // Vérifier sortie normale
-          const exit = this.getExitAt(nx, ny);
+          const exit = this.getAnyExit(nx, ny);
           if (exit) { this.isMoving = false; this.triggerTransition(exit); return; }
           step();
         },
@@ -1558,7 +1656,7 @@ export class WorldScene extends Phaser.Scene {
 
   // ── Transitions ───────────────────────────────────────────────────────────
 
-  private triggerTransition(exit: MapExit) {
+  private triggerTransition(exit: { targetMap: string; targetX: number; targetY: number }) {
     if (this.isExitLocked(exit)) {
       this.showMessage('⚔️ Vaincez le Razmotek pour quitter Hélia.');
       return;

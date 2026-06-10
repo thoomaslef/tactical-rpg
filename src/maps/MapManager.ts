@@ -34,4 +34,11 @@ export class MapManager {
     this.currentMap = map;
     return map;
   }
+
+  getByCoords(cx: number, cy: number): MapData | null {
+    for (const map of Object.values(MAPS)) {
+      if (map.coords && map.coords[0] === cx && map.coords[1] === cy) return map;
+    }
+    return null;
+  }
 }
