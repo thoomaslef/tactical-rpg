@@ -15,11 +15,12 @@
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
   ],
   "exits": [
-    { "x": 0,  "y": 4, "targetMap": "foret_ouest",  "targetX": 12, "targetY": 4 },
+    { "x": 0,  "y": 4, "targetMap": "foret_ouest",  "targetX": 5, "targetY": 4 },
     { "x": 13, "y": 4, "targetMap": "ruines_est",    "targetX": 1,  "targetY": 4 },
     { "x": 6,  "y": 0, "targetMap": "plaine_nord",   "targetX": 6,  "targetY": 7 }
   ],
   "spawns": [
-    { "id": "m_village_1", "x": 10, "y": 2, "hp": 50, "name": "Ennemi" }
+    { "id": "m_village_1", "x": 10, "y": 2, "hp": 30, "name": "Rat" },
+    { "id": "m_village_2", "x": 9,  "y": 5, "hp": 30, "name": "Rat" }
   ]
 }

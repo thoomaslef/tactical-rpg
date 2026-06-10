@@ -21,10 +21,12 @@ export class PreloadScene extends Phaser.Scene {
   private playerY = 4;
   private defeatedMonsters: string[] = [];
   private monsterId = '';
+  private monsterName = 'Ennemi';
+  private monsterHp = 50;
 
   constructor() { super('PreloadScene'); }
 
-  init(data: { fromWorld?: boolean; xp?: number; playerStats?: PlayerStats; equipment?: PlayerEquipment; inventory?: InventoryEntry[]; mapId?: string; playerX?: number; playerY?: number; defeatedMonsters?: string[]; monsterId?: string }) {
+  init(data: { fromWorld?: boolean; xp?: number; playerStats?: PlayerStats; equipment?: PlayerEquipment; inventory?: InventoryEntry[]; mapId?: string; playerX?: number; playerY?: number; defeatedMonsters?: string[]; monsterId?: string; monsterName?: string; monsterHp?: number }) {
     this.playerXP = data?.xp ?? 0;
     this.playerStats = data?.playerStats ? { ...data.playerStats } : undefined;
     this.equipment = data?.equipment ? { ...data.equipment } : emptyEquipment();
@@ -34,6 +36,8 @@ export class PreloadScene extends Phaser.Scene {
     this.playerY = data?.playerY ?? 4;
     this.defeatedMonsters = data?.defeatedMonsters ? [...data.defeatedMonsters] : [];
     this.monsterId = data?.monsterId ?? '';
+    this.monsterName = data?.monsterName ?? 'Ennemi';
+    this.monsterHp = data?.monsterHp ?? 50;
   }
 
   preload() {
@@ -69,7 +73,7 @@ export class PreloadScene extends Phaser.Scene {
     }
 
     this.add.text(W / 2 - 80, H / 2 + 46, 'Archer', { fontSize: '13px', color: '#38bdf8', fontStyle: 'bold' }).setOrigin(0.5);
-    this.add.text(W / 2 + 80, H / 2 + 46, 'Ennemi', { fontSize: '13px', color: '#ef4444', fontStyle: 'bold' }).setOrigin(0.5);
+    this.add.text(W / 2 + 80, H / 2 + 46, this.monsterName, { fontSize: '13px', color: '#ef4444', fontStyle: 'bold' }).setOrigin(0.5);
     this.add.text(W / 2, H / 2 + 80, 'Combat imminent…', { fontSize: '13px', color: '#8b93a7' }).setOrigin(0.5);
 
     const portraits = {
@@ -91,6 +95,8 @@ export class PreloadScene extends Phaser.Scene {
           playerY: this.playerY,
           defeatedMonsters: this.defeatedMonsters,
           monsterId: this.monsterId,
+          monsterName: this.monsterName,
+          monsterHp: this.monsterHp,
         });
       });
     });

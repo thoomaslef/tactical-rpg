@@ -15,6 +15,8 @@ const MAP_H = 9;
 const BLOCKED = new Set([3, 4, 6]);
 const CHEST_X = 8;
 const CHEST_Y = 3;
+const PROF_X = 3;
+const PROF_Y = 3;
 
 const TILE_COLORS: Record<number, [number, number]> = {
   0: [0x4a7c3f, 0x3d6b34],   // grass
@@ -43,6 +45,7 @@ export class WorldScene extends Phaser.Scene {
   private chestCont: Phaser.GameObjects.Container | null = null;
   private hoverGfx!: Phaser.GameObjects.Graphics;
   private statsBtn!: Phaser.GameObjects.Text;
+  private modalOpen = false;
 
   constructor() { super('WorldScene'); }
 
@@ -78,6 +81,7 @@ export class WorldScene extends Phaser.Scene {
     this.drawExits();
     this.drawMonsters();
     this.drawChest();
+    if (this.mapData.id === 'village_centre') this.drawProfessor();
     this.drawPlayer();
     this.drawUI();
 
@@ -86,7 +90,7 @@ export class WorldScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-C', () => this.openCharMenu());
     this.input.keyboard?.on('keydown-S', () => this.openSpellsPanel());
     this.input.keyboard?.on('keydown-E', () => this.openEquipMenu());
-    this.scale.on('resize', () => {
+    const handleResize = () => {
       this.scene.restart({
         mapId: this.mapData.id,
         playerX: this.playerX,
@@ -97,7 +101,9 @@ export class WorldScene extends Phaser.Scene {
         inventory: this.inventory,
         defeatedMonsters: this.defeatedMonsters,
       });
-    });
+    };
+    this.scale.on('resize', handleResize, this);
+    this.events.once('shutdown', () => this.scale.off('resize', handleResize, this));
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────
@@ -126,6 +132,13 @@ export class WorldScene extends Phaser.Scene {
     return this.mapData.spawns.find(s =>
       s.x === x && s.y === y && !this.defeatedMonsters.includes(s.id)
     );
+  }
+
+  private isExitLocked(exit: MapExit): boolean {
+    if (this.mapData.id === 'village_centre' && exit.targetMap !== 'ruines_est') {
+      return gameState.questStep < 3;
+    }
+    return false;
   }
 
   // ── Drawing ───────────────────────────────────────────────────────────────
@@ -202,30 +215,51 @@ export class WorldScene extends Phaser.Scene {
   private drawExits() {
     for (const exit of this.mapData.exits) {
       const { x: px, y: py } = this.iso(exit.x, exit.y);
+      const locked = this.isExitLocked(exit);
+      const fillColor  = locked ? 0x991b1b : 0x38bdf8;
+      const lineColor  = locked ? 0xef4444 : 0x38bdf8;
+      const labelColor = locked ? '#fca5a5' : '#7dd3fc';
+      const diamond = [
+        { x: px,              y: py - TILE_H / 2 },
+        { x: px + TILE_W / 2, y: py },
+        { x: px,              y: py + TILE_H / 2 },
+        { x: px - TILE_W / 2, y: py },
+      ];
 
       const g = this.add.graphics().setDepth(py + 4);
-      g.fillStyle(0x38bdf8, 0.3);
-      g.fillPoints([
-        { x: px, y: py - TILE_H / 2 },
-        { x: px + TILE_W / 2, y: py },
-        { x: px, y: py + TILE_H / 2 },
-        { x: px - TILE_W / 2, y: py },
-      ], true);
-      g.lineStyle(2, 0x38bdf8, 0.75);
-      g.strokePoints([
-        { x: px, y: py - TILE_H / 2 },
-        { x: px + TILE_W / 2, y: py },
-        { x: px, y: py + TILE_H / 2 },
-        { x: px - TILE_W / 2, y: py },
-      ], true);
+      g.fillStyle(fillColor, 0.3);
+      g.fillPoints(diamond, true);
+      g.lineStyle(2, lineColor, 0.75);
+      g.strokePoints(diamond, true);
 
-      this.tweens.add({ targets: g, alpha: 0.2, yoyo: true, repeat: -1, duration: 900 });
+      this.tweens.add({
+        targets: g, alpha: 0.15, yoyo: true, repeat: -1,
+        duration: locked ? 1400 : 900,
+      });
 
-      const arrow = this.getExitArrow(exit);
-      this.add.text(px, py - 3, arrow, {
-        fontSize: '10px', color: '#7dd3fc', fontStyle: 'bold',
+      const label = locked ? '🔒' : this.getExitArrow(exit);
+      this.add.text(px, py - 3, label, {
+        fontSize: locked ? '14px' : '10px', color: labelColor, fontStyle: 'bold',
       }).setOrigin(0.5).setDepth(py + 5);
     }
+  }
+
+  private showLockedExitMessage() {
+    if (this.children.getByName('lockedMsg')) return;
+    const W = this.scale.width;
+    const H = this.scale.height;
+    const lines = gameState.questStep === 2
+      ? '🔒 Sortie verrouillée.\nVaincs Rasmotek dans les Ruines de l\'Est\npuis parle au Professeur !'
+      : '🔒 Sortie verrouillée.\nAccomplis les quêtes du Professeur\npour quitter le village.';
+    const msg = this.add.text(W / 2, H / 2 - 20, lines, {
+      fontSize: '14px', color: '#fca5a5', fontStyle: 'bold',
+      backgroundColor: '#1a0808', padding: { x: 16, y: 12 },
+      align: 'center', stroke: '#000', strokeThickness: 3,
+    }).setOrigin(0.5).setDepth(20000).setName('lockedMsg');
+    this.tweens.add({
+      targets: msg, alpha: 0, delay: 2400, duration: 400,
+      onComplete: () => msg.destroy(),
+    });
   }
 
   private getExitArrow(exit: MapExit): string {
@@ -318,6 +352,125 @@ export class WorldScene extends Phaser.Scene {
       { fontSize: '13px', color: '#ffd700', fontStyle: 'bold', stroke: '#000', strokeThickness: 3 }
     ).setOrigin(0.5).setDepth(20000);
     this.tweens.add({ targets: popup, y: popup.y - 40, alpha: 0, duration: 1800, onComplete: () => popup.destroy() });
+  }
+
+  private drawProfessor() {
+    const { x: px, y: py } = this.iso(PROF_X, PROF_Y);
+
+    // Pulse ring
+    const ring = this.add.circle(px, py + 2, 24, 0xffd700, 0.10).setDepth(999 + py);
+    this.tweens.add({ targets: ring, scaleX: 1.3, scaleY: 1.3, alpha: 0, yoyo: true, repeat: -1, duration: 1100 });
+
+    // Sprite
+    const c = this.add.container(px, py - 14).setDepth(1000 + py);
+    const shadow = this.add.ellipse(0, 14, 28, 9, 0x000000, 0.28);
+    const body = this.add.graphics();
+    body.fillStyle(0x7c3aed, 1);
+    body.fillRoundedRect(-10, 0, 20, 14, 3);
+    body.fillStyle(0xa78bfa, 1);
+    body.fillCircle(0, -7, 8);
+    const icon = this.add.text(0, -8, '🧙', { fontSize: '11px' }).setOrigin(0.5);
+    const nameLabel = this.add.text(0, -26, 'Professeur', {
+      fontSize: '9px', color: '#ffd700', fontStyle: 'bold', stroke: '#000', strokeThickness: 2,
+    }).setOrigin(0.5);
+    c.add([shadow, body, icon, nameLabel]);
+    this.tweens.add({ targets: c, y: c.y - 3, yoyo: true, repeat: -1, duration: 1100 });
+
+    // Indicateur de quête disponible
+    if (this.canAdvanceQuest()) {
+      const badge = this.add.text(px + 14, py - 28, '!', {
+        fontSize: '15px', color: '#ffd700', fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+      }).setOrigin(0.5).setDepth(1001 + py);
+      this.tweens.add({ targets: badge, y: badge.y - 4, yoyo: true, repeat: -1, duration: 600 });
+    }
+  }
+
+  private canAdvanceQuest(): boolean {
+    const ratKilled = this.defeatedMonsters.some(id => id.startsWith('m_village_'));
+    if (gameState.questStep === 0 && ratKilled) return true;
+    if (gameState.questStep === 1 && gameState.hasKey) return true;
+    if (gameState.questStep === 2 && this.defeatedMonsters.includes('m_rasmotek')) return true;
+    return false;
+  }
+
+  private triggerQuestDialogue() {
+    if (this.isMoving || this.modalOpen) return;
+    const ratKilled = this.defeatedMonsters.some(id => id.startsWith('m_village_'));
+    let text: string;
+    let onConfirm: (() => void) | null = null;
+
+    if (gameState.questStep === 0) {
+      if (ratKilled) {
+        text = '✅ Quête 1 accomplie !\n"Bien joué ! Les rats sont vaincus.\n\nMission suivante :\nTrouve la Clé du Donjon\nen battant les rats restants."';
+        onConfirm = () => { gameState.questStep = 1; };
+      } else {
+        text = '🧙 Professeur Aldric :\n"Bienvenue, jeune chasseur !\n\nQuête 1 : Des rats infestent\nnotre village. Élimine-les !"';
+      }
+    } else if (gameState.questStep === 1) {
+      if (gameState.hasKey) {
+        text = '✅ Quête 2 accomplie !\n"Remarquable ! La Clé du Donjon\nest en ta possession.\n\nMission suivante :\nEntre dans les Ruines de l\'Est\net vaincs le terrible Rasmotek !"';
+        onConfirm = () => { gameState.questStep = 2; };
+      } else {
+        text = '🧙 Professeur Aldric :\n"Quête 2 : La Clé du Donjon\nest cachée sur les rats du village.\nContinue à les combattre !"';
+      }
+    } else if (gameState.questStep === 2) {
+      if (this.defeatedMonsters.includes('m_rasmotek')) {
+        text = '✅ Quête 3 accomplie !\n"Rasmotek est vaincu ! Tu as prouvé\nta valeur, jeune chasseur.\n\nLa Forêt de l\'Ouest est\nmaintenant accessible. Bonne route !"';
+        onConfirm = () => { gameState.questStep = 3; };
+      } else {
+        text = '🧙 Professeur Aldric :\n"Quête 3 : Rends-toi dans les\nRuines de l\'Est (sortie à droite)\net vaincs le terrible Rasmotek !"';
+      }
+    } else {
+      text = '🧙 Professeur Aldric :\n"Tu as accompli les trois quêtes !\nLa forêt de l\'Ouest t\'attend,\nhéros !"';
+    }
+
+    this.showQuestModal(text, onConfirm);
+  }
+
+  private showQuestModal(text: string, onConfirm: (() => void) | null) {
+    this.modalOpen = true;
+    const W = this.scale.width;
+    const H = this.scale.height;
+
+    const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.55)
+      .setDepth(25000).setInteractive();
+
+    const panel = this.add.container(W / 2, H / 2).setDepth(25001);
+    const bg = this.add.rectangle(0, 0, 380, 250, 0x0e1320, 1)
+      .setStrokeStyle(2, 0xffd700);
+    const txt = this.add.text(0, -65, text, {
+      fontSize: '13px', color: '#e6e8ee', align: 'center',
+      wordWrap: { width: 340 }, lineSpacing: 4,
+    }).setOrigin(0.5);
+    const btnBg = this.add.rectangle(0, 95, 160, 36, 0x1c1a08)
+      .setStrokeStyle(1, 0xffd700).setInteractive({ cursor: 'pointer' });
+    const btnTxt = this.add.text(0, 95, 'Continuer', {
+      fontSize: '13px', color: '#ffd700', fontStyle: 'bold',
+    }).setOrigin(0.5);
+    panel.add([bg, txt, btnBg, btnTxt]);
+
+    btnBg.on('pointerover', () => { btnBg.fillColor = 0x2a2610; });
+    btnBg.on('pointerout',  () => { btnBg.fillColor = 0x1c1a08; });
+
+    const close = () => {
+      this.modalOpen = false;
+      overlay.destroy();
+      panel.destroy();
+      if (onConfirm) {
+        onConfirm();
+        this.scene.restart({
+          mapId: this.mapData.id,
+          playerX: this.playerX,
+          playerY: this.playerY,
+          xp: this.playerXP,
+          playerStats: this.playerStats,
+          equipment: this.equipment,
+          inventory: this.inventory,
+          defeatedMonsters: this.defeatedMonsters,
+        });
+      }
+    };
+    btnBg.on('pointerdown', close);
   }
 
   private drawPlayer() {
@@ -444,11 +597,14 @@ export class WorldScene extends Phaser.Scene {
     }
     const { x: px, y: py } = this.iso(gx, gy);
     const hasMonster = !!this.getMonsterAt(gx, gy);
-    const hasExit = !!this.getExitAt(gx, gy);
+    const exitAtTile = this.getExitAt(gx, gy);
+    const hasExit = !!exitAtTile;
+    const lockedExit = hasExit && this.isExitLocked(exitAtTile!);
     const hasChest = !gameState.chestLooted && gx === CHEST_X && gy === CHEST_Y;
+    const hasProf = this.mapData.id === 'village_centre' && gx === PROF_X && gy === PROF_Y;
     const blocked = this.isBlocked(gx, gy) && !hasMonster;
 
-    const color = hasMonster ? 0xef4444 : hasChest ? 0xffd700 : hasExit ? 0x38bdf8 : blocked ? 0x555566 : 0xffffff;
+    const color = hasMonster ? 0xef4444 : hasChest ? 0xffd700 : hasProf ? 0xa78bfa : lockedExit ? 0x991b1b : hasExit ? 0x38bdf8 : blocked ? 0x555566 : 0xffffff;
     const alpha = blocked ? 0.25 : 0.45;
     this.hoverGfx.lineStyle(1.5, color, alpha);
     this.hoverGfx.beginPath();
@@ -459,18 +615,24 @@ export class WorldScene extends Phaser.Scene {
     this.hoverGfx.closePath();
     this.hoverGfx.strokePath();
 
-    this.input.setDefaultCursor(hasMonster || hasExit || hasChest ? 'pointer' : 'default');
+    this.input.setDefaultCursor(hasMonster || hasExit || hasChest || hasProf ? 'pointer' : 'default');
   }
 
   // ── Click / movement ──────────────────────────────────────────────────────
 
   private handleClick(ptr: Phaser.Input.Pointer) {
-    if (this.isMoving) return;
+    if (this.isMoving || this.modalOpen) return;
     const { x: gx, y: gy } = isoToGrid(ptr.x, ptr.y, this.originX, this.originY);
     if (!this.inBounds(gx, gy)) return;
 
     // Chest
     if (!gameState.chestLooted && gx === CHEST_X && gy === CHEST_Y) { this.lootChest(); return; }
+
+    // Professeur → dialogue de quête
+    if (this.mapData.id === 'village_centre' && gx === PROF_X && gy === PROF_Y) {
+      this.triggerQuestDialogue();
+      return;
+    }
 
     // Monster → combat
     const monster = this.getMonsterAt(gx, gy);
@@ -555,6 +717,12 @@ export class WorldScene extends Phaser.Scene {
   // ── Transitions ───────────────────────────────────────────────────────────
 
   private triggerTransition(exit: MapExit) {
+    if (this.isExitLocked(exit)) {
+      this.tweens.killTweensOf(this.playerCont);
+      this.tweens.add({ targets: this.playerCont, y: this.playerCont.y - 4, yoyo: true, repeat: -1, duration: 950 });
+      this.showLockedExitMessage();
+      return;
+    }
     this.isMoving = true;
     this.input.setDefaultCursor('default');
     this.cameras.main.fadeOut(280, 0, 0, 0);
@@ -590,6 +758,8 @@ export class WorldScene extends Phaser.Scene {
           playerY: this.playerY,
           defeatedMonsters: this.defeatedMonsters,
           monsterId: monster.id,
+          monsterName: monster.name,
+          monsterHp: monster.hp,
         });
       });
     };
