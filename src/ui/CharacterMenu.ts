@@ -317,14 +317,14 @@ export class CharacterMenu {
     foot.appendChild(secTitle('Dégâts & Éléments'));
     foot.appendChild(statGrid([
       { icon: '💥', label: 'Finaux',   value: `+${lvlDmgPct} %`, color: '#fb923c', sub: `nv ${lvl}` },
-      { icon: '🌊', label: 'Eau',      value: String(this.stats.eau),      color: '#7dd3fc' },
-      { icon: '🔥', label: 'Feu',      value: String(this.stats.feu),      color: '#fb923c' },
-      { icon: '🌪️', label: 'Air',     value: String(this.stats.air),      color: '#bef264' },
-      { icon: '🌿', label: 'Terre',    value: String(this.stats.terre),    color: '#84cc16' },
-      { icon: '🔮', label: 'Psy',      value: String(this.stats.psy),      color: '#e879f9' },
-      { icon: '❄️', label: 'Glace',   value: String(this.stats.glace),    color: '#67e8f9' },
-      { icon: '⚡', label: 'Électrik', value: String(this.stats.electrik), color: '#facc15' },
-      { icon: '💚', label: 'Soin',     value: String(this.stats.soin),     color: '#4ade80' },
+      { icon: '🌊', label: 'Eau',      value: String(this.stats.eau),                   color: '#7dd3fc' },
+      { icon: '🔥', label: 'Feu',      value: String(this.stats.feu + eb.feu),          color: '#fb923c', sub: eb.feu   > 0 ? `+${eb.feu} équip.`   : '' },
+      { icon: '🌪️', label: 'Air',     value: String(this.stats.air),                   color: '#bef264' },
+      { icon: '🌿', label: 'Terre',    value: String(this.stats.terre + eb.terre),      color: '#84cc16', sub: eb.terre > 0 ? `+${eb.terre} équip.` : '' },
+      { icon: '🔮', label: 'Psy',      value: String(this.stats.psy),                   color: '#e879f9' },
+      { icon: '❄️', label: 'Glace',   value: String(this.stats.glace),                 color: '#67e8f9' },
+      { icon: '⚡', label: 'Électrik', value: String(this.stats.electrik),              color: '#facc15' },
+      { icon: '💚', label: 'Soin',     value: String(this.stats.soin),                  color: '#4ade80' },
     ]));
 
     // ── Section Utilitaires ──
