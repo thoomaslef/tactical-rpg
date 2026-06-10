@@ -265,28 +265,30 @@ export class WorldScene extends Phaser.Scene {
     return exit.targetMap.startsWith('map_foret') && !gameState.quest3RewardGiven;
   }
 
-  /** Retourne un exit basé sur les coordonnées de la map pour la bordure (gx, gy), ou null. */
+  /** Retourne un exit basé sur les coordonnées de la map pour la case centrale de bordure (gx, gy), ou null. */
   private getCoordExit(gx: number, gy: number): { targetMap: string; targetX: number; targetY: number } | null {
     const coords = this.mapData.coords;
     if (!coords) return null;
     const [cx, cy] = coords;
     const mw = this.mapData.width  ?? DEFAULT_MAP_W;
     const mh = this.mapData.height ?? DEFAULT_MAP_H;
-    if (gy === 1 && gx >= 1 && gx <= mw - 2) {
+    const midX = Math.floor(mw / 2);
+    const midY = Math.floor(mh / 2);
+    if (gx === midX && gy === 1) {
       const nb = this.mapManager.getByCoords(cx, cy - 1);
-      if (nb) return { targetMap: nb.id, targetX: gx, targetY: (nb.height ?? DEFAULT_MAP_H) - 2 };
+      if (nb) return { targetMap: nb.id, targetX: midX, targetY: (nb.height ?? DEFAULT_MAP_H) - 2 };
     }
-    if (gy === mh - 2 && gx >= 1 && gx <= mw - 2) {
+    if (gx === midX && gy === mh - 2) {
       const nb = this.mapManager.getByCoords(cx, cy + 1);
-      if (nb) return { targetMap: nb.id, targetX: gx, targetY: 1 };
+      if (nb) return { targetMap: nb.id, targetX: midX, targetY: 1 };
     }
-    if (gx === 1 && gy >= 1 && gy <= mh - 2) {
+    if (gx === 1 && gy === midY) {
       const nb = this.mapManager.getByCoords(cx - 1, cy);
-      if (nb) return { targetMap: nb.id, targetX: (nb.width ?? DEFAULT_MAP_W) - 2, targetY: gy };
+      if (nb) return { targetMap: nb.id, targetX: (nb.width ?? DEFAULT_MAP_W) - 2, targetY: midY };
     }
-    if (gx === mw - 2 && gy >= 1 && gy <= mh - 2) {
+    if (gx === mw - 2 && gy === midY) {
       const nb = this.mapManager.getByCoords(cx + 1, cy);
-      if (nb) return { targetMap: nb.id, targetX: 1, targetY: gy };
+      if (nb) return { targetMap: nb.id, targetX: 1, targetY: midY };
     }
     return null;
   }
@@ -643,28 +645,17 @@ export class WorldScene extends Phaser.Scene {
       const label    = locked ? '🔒' : arrow;
 
       const midPos   = horiz ? this.tileCenter(midGx, bord) : this.tileCenter(bord, midGy);
-      const g        = this.add.graphics().setDepth(midPos.y + 1);
-      g.fillStyle(fillCol, 0.22);
-      g.lineStyle(1, lineCol, 0.55);
+      const { x: tx, y: ty } = midPos;
+      const g        = this.add.graphics().setDepth(ty + 1);
+      g.fillStyle(fillCol, 0.30);
+      g.fillPoints([{x:tx,y:ty-hh},{x:tx+hw,y:ty},{x:tx,y:ty+hh},{x:tx-hw,y:ty}], true);
+      g.lineStyle(2, lineCol, 0.9);
+      g.strokePoints([{x:tx,y:ty-hh},{x:tx+hw,y:ty},{x:tx,y:ty+hh},{x:tx-hw,y:ty}], true);
 
-      if (horiz) {
-        for (let gx = 1; gx <= mw - 2; gx++) {
-          const { x: tx, y: ty } = this.tileCenter(gx, bord);
-          g.fillPoints([{x:tx,y:ty-hh},{x:tx+hw,y:ty},{x:tx,y:ty+hh},{x:tx-hw,y:ty}], true);
-          g.strokePoints([{x:tx,y:ty-hh},{x:tx+hw,y:ty},{x:tx,y:ty+hh},{x:tx-hw,y:ty}], true);
-        }
-      } else {
-        for (let gy = 1; gy <= mh - 2; gy++) {
-          const { x: tx, y: ty } = this.tileCenter(bord, gy);
-          g.fillPoints([{x:tx,y:ty-hh},{x:tx+hw,y:ty},{x:tx,y:ty+hh},{x:tx-hw,y:ty}], true);
-          g.strokePoints([{x:tx,y:ty-hh},{x:tx+hw,y:ty},{x:tx,y:ty+hh},{x:tx-hw,y:ty}], true);
-        }
-      }
+      this.tweens.add({ targets: g, alpha: 0.15, yoyo: true, repeat: -1, duration: locked ? 1400 : 950 });
 
-      this.tweens.add({ targets: g, alpha: 0.4, yoyo: true, repeat: -1, duration: locked ? 1400 : 950 });
-
-      const ax = midPos.x + (!horiz ? (bord === 1 ? -hw - 10 : hw + 10) : 0);
-      const ay = midPos.y + (horiz  ? (bord === 1 ? -hh - 14 : hh + 6)  : 0);
+      const ax = tx + (!horiz ? (bord === 1 ? -hw - 10 : hw + 10) : 0);
+      const ay = ty + (horiz  ? (bord === 1 ? -hh - 14 : hh + 6)  : 0);
       const txt = this.add.text(ax, ay, label, {
         fontSize: '18px', color: locked ? '#fca5a5' : '#7dd3fc', fontStyle: 'bold',
         stroke: '#000000', strokeThickness: 3,
