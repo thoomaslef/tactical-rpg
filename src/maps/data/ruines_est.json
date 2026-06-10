@@ -19,6 +19,7 @@
   ],
   "spawns": [
     { "id": "m_ruines_1", "x": 9,  "y": 2, "hp": 70, "name": "Spectre" },
-    { "id": "m_ruines_2", "x": 3,  "y": 6, "hp": 70, "name": "Spectre" }
+    { "id": "m_ruines_2", "x": 3,  "y": 6, "hp": 70, "name": "Spectre" },
+    { "id": "m_rasmotek", "x": 7,  "y": 4, "hp": 90, "name": "Rasmotek" }
   ]
 }

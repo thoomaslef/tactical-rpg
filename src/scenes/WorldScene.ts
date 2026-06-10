@@ -128,6 +128,13 @@ export class WorldScene extends Phaser.Scene {
     );
   }
 
+  private isExitLocked(exit: MapExit): boolean {
+    if (exit.targetMap === 'foret_ouest') {
+      return !this.defeatedMonsters.includes('m_rasmotek');
+    }
+    return false;
+  }
+
   // ── Drawing ───────────────────────────────────────────────────────────────
 
   private drawTiles() {
@@ -202,30 +209,51 @@ export class WorldScene extends Phaser.Scene {
   private drawExits() {
     for (const exit of this.mapData.exits) {
       const { x: px, y: py } = this.iso(exit.x, exit.y);
+      const locked = this.isExitLocked(exit);
+      const fillColor  = locked ? 0x991b1b : 0x38bdf8;
+      const lineColor  = locked ? 0xef4444 : 0x38bdf8;
+      const labelColor = locked ? '#fca5a5' : '#7dd3fc';
+      const diamond = [
+        { x: px,              y: py - TILE_H / 2 },
+        { x: px + TILE_W / 2, y: py },
+        { x: px,              y: py + TILE_H / 2 },
+        { x: px - TILE_W / 2, y: py },
+      ];
 
       const g = this.add.graphics().setDepth(py + 4);
-      g.fillStyle(0x38bdf8, 0.3);
-      g.fillPoints([
-        { x: px, y: py - TILE_H / 2 },
-        { x: px + TILE_W / 2, y: py },
-        { x: px, y: py + TILE_H / 2 },
-        { x: px - TILE_W / 2, y: py },
-      ], true);
-      g.lineStyle(2, 0x38bdf8, 0.75);
-      g.strokePoints([
-        { x: px, y: py - TILE_H / 2 },
-        { x: px + TILE_W / 2, y: py },
-        { x: px, y: py + TILE_H / 2 },
-        { x: px - TILE_W / 2, y: py },
-      ], true);
+      g.fillStyle(fillColor, 0.3);
+      g.fillPoints(diamond, true);
+      g.lineStyle(2, lineColor, 0.75);
+      g.strokePoints(diamond, true);
 
-      this.tweens.add({ targets: g, alpha: 0.2, yoyo: true, repeat: -1, duration: 900 });
+      this.tweens.add({
+        targets: g, alpha: 0.15, yoyo: true, repeat: -1,
+        duration: locked ? 1400 : 900,
+      });
 
-      const arrow = this.getExitArrow(exit);
-      this.add.text(px, py - 3, arrow, {
-        fontSize: '10px', color: '#7dd3fc', fontStyle: 'bold',
+      const label = locked ? '🔒' : this.getExitArrow(exit);
+      this.add.text(px, py - 3, label, {
+        fontSize: locked ? '14px' : '10px', color: labelColor, fontStyle: 'bold',
       }).setOrigin(0.5).setDepth(py + 5);
     }
+  }
+
+  private showLockedExitMessage() {
+    if (this.children.getByName('lockedMsg')) return;
+    const W = this.scale.width;
+    const H = this.scale.height;
+    const msg = this.add.text(W / 2, H / 2 - 20,
+      '🔒 La forêt est inaccessible.\nDéfaites Rasmotek dans les Ruines de l\'Est.',
+      {
+        fontSize: '14px', color: '#fca5a5', fontStyle: 'bold',
+        backgroundColor: '#1a0808', padding: { x: 16, y: 12 },
+        align: 'center', stroke: '#000', strokeThickness: 3,
+      }
+    ).setOrigin(0.5).setDepth(20000).setName('lockedMsg');
+    this.tweens.add({
+      targets: msg, alpha: 0, delay: 2200, duration: 400,
+      onComplete: () => msg.destroy(),
+    });
   }
 
   private getExitArrow(exit: MapExit): string {
@@ -444,11 +472,13 @@ export class WorldScene extends Phaser.Scene {
     }
     const { x: px, y: py } = this.iso(gx, gy);
     const hasMonster = !!this.getMonsterAt(gx, gy);
-    const hasExit = !!this.getExitAt(gx, gy);
+    const exitAtTile = this.getExitAt(gx, gy);
+    const hasExit = !!exitAtTile;
+    const lockedExit = hasExit && this.isExitLocked(exitAtTile!);
     const hasChest = !gameState.chestLooted && gx === CHEST_X && gy === CHEST_Y;
     const blocked = this.isBlocked(gx, gy) && !hasMonster;
 
-    const color = hasMonster ? 0xef4444 : hasChest ? 0xffd700 : hasExit ? 0x38bdf8 : blocked ? 0x555566 : 0xffffff;
+    const color = hasMonster ? 0xef4444 : hasChest ? 0xffd700 : lockedExit ? 0x991b1b : hasExit ? 0x38bdf8 : blocked ? 0x555566 : 0xffffff;
     const alpha = blocked ? 0.25 : 0.45;
     this.hoverGfx.lineStyle(1.5, color, alpha);
     this.hoverGfx.beginPath();
@@ -555,6 +585,12 @@ export class WorldScene extends Phaser.Scene {
   // ── Transitions ───────────────────────────────────────────────────────────
 
   private triggerTransition(exit: MapExit) {
+    if (this.isExitLocked(exit)) {
+      this.tweens.killTweensOf(this.playerCont);
+      this.tweens.add({ targets: this.playerCont, y: this.playerCont.y - 4, yoyo: true, repeat: -1, duration: 950 });
+      this.showLockedExitMessage();
+      return;
+    }
     this.isMoving = true;
     this.input.setDefaultCursor('default');
     this.cameras.main.fadeOut(280, 0, 0, 0);
