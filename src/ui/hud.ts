@@ -78,14 +78,20 @@ export class HUD {
   show() {
     ['hud', 'turnInfo', 'log'].forEach(id => {
       const el = document.getElementById(id);
-      if (el) el.style.visibility = 'visible';
+      if (el) {
+        el.style.visibility = 'visible';
+        el.style.pointerEvents = '';
+      }
     });
   }
 
   hide() {
     ['hud', 'turnInfo', 'log'].forEach(id => {
       const el = document.getElementById(id);
-      if (el) el.style.visibility = 'hidden';
+      if (el) {
+        el.style.visibility = 'hidden';
+        el.style.pointerEvents = 'none';
+      }
     });
     const heroPanel = document.getElementById('panel-hero');
     const enemyPanel = document.getElementById('panel-enemy');

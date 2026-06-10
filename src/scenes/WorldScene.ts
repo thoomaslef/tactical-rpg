@@ -90,7 +90,7 @@ export class WorldScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-C', () => this.openCharMenu());
     this.input.keyboard?.on('keydown-S', () => this.openSpellsPanel());
     this.input.keyboard?.on('keydown-E', () => this.openEquipMenu());
-    this.scale.on('resize', () => {
+    const handleResize = () => {
       this.scene.restart({
         mapId: this.mapData.id,
         playerX: this.playerX,
@@ -101,7 +101,9 @@ export class WorldScene extends Phaser.Scene {
         inventory: this.inventory,
         defeatedMonsters: this.defeatedMonsters,
       });
-    });
+    };
+    this.scale.on('resize', handleResize, this);
+    this.events.once('shutdown', () => this.scale.off('resize', handleResize, this));
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────
