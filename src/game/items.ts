@@ -8,6 +8,8 @@ export interface ItemBonuses {
   resistance?: number;
   portee?: number;
   meleeDamage?: number;
+  dmgTerre?: number;  // % bonus dégâts Terre
+  dmgFeu?: number;    // % bonus dégâts Feu
 }
 
 export interface EquipBonuses {
@@ -17,6 +19,8 @@ export interface EquipBonuses {
   portee: number;
   pa: number;
   pm: number;
+  dmgTerre: number;
+  dmgFeu: number;
 }
 
 export interface Item {
@@ -91,11 +95,37 @@ export const ITEMS: Record<string, Item> = {
     weight: 5, bonuses: { hp: 6, fluide: 2 },
     description: '+6 PV max · +2 Magie max',
   },
+  anneau_foret: {
+    id: 'anneau_foret', name: 'Anneau de la Forêt', icon: '🌿', slot: 'ring1',
+    weight: 2, bonuses: { dmgTerre: 10, dmgFeu: 10 },
+    description: '+10% dégâts Terre · +10% dégâts Feu',
+  },
+  amulette_foret: {
+    id: 'amulette_foret', name: 'Amulette de la Forêt', icon: '🍃', slot: 'amulet',
+    weight: 3, bonuses: { fluide: 10, hp: 10 },
+    description: '+10 Magie max · +10 PV max',
+  },
+  casque_foret: {
+    id: 'casque_foret', name: 'Casque de la Forêt', icon: '🌲', slot: 'helmet',
+    weight: 6, bonuses: { dmgTerre: 10, dmgFeu: 10, resistance: 3 },
+    description: '+10% dégâts Terre · +10% dégâts Feu · +3 Résistance',
+  },
 };
 
 export const MAX_WEIGHT = 1000;
 
 export const PANOPLIES: PanoplyDef[] = [
+  {
+    id: 'panoplie_foret',
+    name: 'Panoplie de la Forêt',
+    slotRequirements: {
+      ring1: 'anneau_foret',
+      ring2: 'anneau_foret',
+      amulet: 'amulette_foret',
+      helmet: 'casque_foret',
+    },
+    bonus: { pa: 1 },
+  },
   {
     id: 'panoplie_fer',
     name: 'Panoplie de Fer',
@@ -148,7 +178,7 @@ export function getPanoplyProgress(equip: PlayerEquipment, p: PanoplyDef): { cou
 }
 
 export function getEquipBonuses(equip: PlayerEquipment): EquipBonuses {
-  const result: EquipBonuses = { hp: 0, fluide: 0, resistance: 0, portee: 0, pa: 0, pm: 0 };
+  const result: EquipBonuses = { hp: 0, fluide: 0, resistance: 0, portee: 0, pa: 0, pm: 0, dmgTerre: 0, dmgFeu: 0 };
   for (const itemId of Object.values(equip)) {
     if (!itemId) continue;
     const item = ITEMS[itemId];
@@ -157,6 +187,8 @@ export function getEquipBonuses(equip: PlayerEquipment): EquipBonuses {
     result.fluide += item.bonuses.fluide ?? 0;
     result.resistance += item.bonuses.resistance ?? 0;
     result.portee += item.bonuses.portee ?? 0;
+    result.dmgTerre += item.bonuses.dmgTerre ?? 0;
+    result.dmgFeu += item.bonuses.dmgFeu ?? 0;
   }
   for (const p of PANOPLIES) {
     if (isPanoplyComplete(equip, p)) {
@@ -192,7 +224,7 @@ export function getMeleeSpell(equip: PlayerEquipment): Spell {
 }
 
 export function chestInventory(): InventoryEntry[] {
-  return Object.keys(ITEMS).map(id => ({ id, qty: id === 'anneau_fer' ? 2 : 1 }));
+  return Object.keys(ITEMS).map(id => ({ id, qty: id === 'anneau_fer' || id === 'anneau_foret' ? 2 : 1 }));
 }
 
 export function currentWeight(equip: PlayerEquipment, inv: InventoryEntry[]): number {

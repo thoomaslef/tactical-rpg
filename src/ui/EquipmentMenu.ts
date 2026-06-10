@@ -170,7 +170,7 @@ export class EquipmentMenu {
 
     // Equipment bonus summary
     const eb = getEquipBonuses(this.equip);
-    const hasBonus = eb.hp > 0 || eb.fluide > 0 || eb.resistance > 0 || eb.portee > 0 || eb.pa > 0 || eb.pm > 0;
+    const hasBonus = eb.hp > 0 || eb.fluide > 0 || eb.resistance > 0 || eb.portee > 0 || eb.pa > 0 || eb.pm > 0 || eb.dmgTerre > 0 || eb.dmgFeu > 0;
     if (hasBonus) {
       const bonusSep = el('div', { borderTop: '1px solid #1e2738', margin: '14px 0 10px' });
       left.appendChild(bonusSep);
@@ -186,6 +186,8 @@ export class EquipmentMenu {
       if (eb.resistance) bonusRow.appendChild(bonusBadge(`🛡️ +${eb.resistance} Résist.`, '#94a3b8', '#111827'));
       if (eb.pa)         bonusRow.appendChild(bonusBadge(`⚡ +${eb.pa} PA`, '#fde047', '#1a1500'));
       if (eb.pm)         bonusRow.appendChild(bonusBadge(`👟 +${eb.pm} PM`, '#a78bfa', '#100d1e'));
+      if (eb.dmgTerre)   bonusRow.appendChild(bonusBadge(`🪨 +${eb.dmgTerre}% Terre`, '#a16207', '#1c1007'));
+      if (eb.dmgFeu)     bonusRow.appendChild(bonusBadge(`🔥 +${eb.dmgFeu}% Feu`, '#f97316', '#1c0800'));
       left.appendChild(bonusRow);
     }
 
@@ -366,6 +368,8 @@ export class EquipmentMenu {
     if (item.bonuses.hp)         statLine.appendChild(statTag(`❤️ +${item.bonuses.hp} PV`,      '#f87171', '#1c0808'));
     if (item.bonuses.fluide)     statLine.appendChild(statTag(`💧 +${item.bonuses.fluide} Magie`, '#a855f7', '#160d1e'));
     if (item.bonuses.resistance) statLine.appendChild(statTag(`🛡️ +${item.bonuses.resistance} Résist.`, '#94a3b8', '#111827'));
+    if (item.bonuses.dmgTerre)   statLine.appendChild(statTag(`🪨 +${item.bonuses.dmgTerre}% Terre`, '#a16207', '#1c1007'));
+    if (item.bonuses.dmgFeu)     statLine.appendChild(statTag(`🔥 +${item.bonuses.dmgFeu}% Feu`, '#f97316', '#1c0800'));
     statLine.appendChild(statTag(`⚖️ ${item.weight}`, '#4a5568', '#0b0f1a'));
     info.append(nameLine, statLine);
 
