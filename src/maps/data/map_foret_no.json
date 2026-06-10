@@ -408,13 +408,6 @@
       "targetMap": "map_foret_o",
       "targetX": 11,
       "targetY": 2
-    },
-    {
-      "x": 11,
-      "y": 1,
-      "targetMap": "map_clairiere",
-      "targetX": 11,
-      "targetY": 13
     }
   ],
   "spawns": [
