@@ -1,40 +1,76 @@
-import { Spell } from '../types';
+import { ISpell } from '../data/spells/ISpell';
 
-export const SPELLS: Record<string, Spell> = {
+// Sorts utilisés par les ennemis (IA)
+export const SPELLS: Record<string, ISpell> = {
   arrow: {
     id: 'arrow',
     name: 'Flèche',
     icon: '🏹',
-    cost: 3,
-    fluideCost: 3,
-    range: 7,
+    paCost: 3,
+    fluideCost: 2,
+    maxRange: 7,
     minRange: 1,
-    damage: 10,
-    description: 'Inflige 10 dégâts à portée 7. Sort de base polyvalent.'
+    baseDamage: { min: 8, max: 12 },
+    element: 'neutre',
+    isModifiable: false,
+    description: 'Attaque à distance — 8 à 12 dégâts. Portée 1–7.',
   },
-  explosive: {
-    id: 'explosive',
-    name: 'Explosive',
-    icon: '💥',
-    cost: 5,
-    fluideCost: 5,
-    range: 6,
-    minRange: 2,
-    damage: 22,
-    aoe: 1,
-    description: 'Flèche explosive — 22 dégâts en zone de rayon 1. Portée 2–6.'
-  },
-  push: {
-    id: 'push',
-    name: 'Fl. Recul',
-    icon: '💨',
-    cost: 3,
-    fluideCost: 3,
-    range: 3,
+  bite: {
+    id: 'bite',
+    name: 'Morsure',
+    icon: '🦷',
+    paCost: 3,
+    fluideCost: 0,
+    maxRange: 1,
     minRange: 1,
-    push: 3,
-    description: 'Repousse l\'ennemi de 3 cases. Aucun dégât. Portée 3.'
-  }
+    baseDamage: { min: 8, max: 12 },
+    element: 'neutre',
+    isModifiable: false,
+    description: 'Attaque de mêlée — 8 à 12 dégâts. Portée 1.',
+  },
+  charge_attack: {
+    id: 'charge_attack',
+    name: 'Charge',
+    icon: '🐗',
+    paCost: 3,
+    fluideCost: 0,
+    maxRange: 2,
+    minRange: 1,
+    baseDamage: { min: 50, max: 70 },
+    element: 'neutre',
+    isModifiable: false,
+    description: 'Charge fracassante — 50 à 70 dégâts. Portée 1–2.',
+  },
+  spore_cloud: {
+    id: 'spore_cloud',
+    name: 'Nuage de Spores',
+    icon: '🍄',
+    paCost: 3,
+    fluideCost: 0,
+    maxRange: 3,
+    minRange: 1,
+    baseDamage: { min: 22, max: 22 },
+    aoeSize: 1,
+    element: 'air',
+    isModifiable: false,
+    drainPm: 1,
+    description: 'Nuage de spores en zone — 22 dégâts, −1 PM au prochain tour. Portée 1–3.',
+  },
+  spectral_strike: {
+    id: 'spectral_strike',
+    name: 'Frappe Spectrale',
+    icon: '👁️',
+    paCost: 3,
+    fluideCost: 0,
+    maxRange: 2,
+    minRange: 1,
+    baseDamage: { min: 35, max: 35 },
+    element: 'neutre',
+    isModifiable: false,
+    drainPa: 1,
+    description: 'Attaque spectrale — 35 dégâts, retire 1 PA. Portée 1–2.',
+  },
 };
 
-export const ALL_SPELLS = [SPELLS.arrow, SPELLS.explosive, SPELLS.push];
+// Ré-export de tous les sorts jouables pour le Grimoire (SpellsPanel)
+export { ALL_SPELLS } from '../data/spells/spellsData';

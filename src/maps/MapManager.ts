@@ -1,14 +1,30 @@
 import { MapData } from './MapLoader';
-import villageCentre from './data/village_centre.json';
-import foretOuest from './data/foret_ouest.json';
-import plaineNord from './data/plaine_nord.json';
-import ruinesEst from './data/ruines_est.json';
+import mapC from './data/map_c.json';
+import mapN from './data/map_n.json';
+import mapS from './data/map_s.json';
+import mapE from './data/map_e.json';
+import mapO from './data/map_o.json';
+import mapSE from './data/map_se.json';
+import mapDungeonRaz from './data/map_dungeon_raz.json';
+import mapForet    from './data/map_foret.json';
+import mapForetO   from './data/map_foret_o.json';
+import mapForetE   from './data/map_foret_e.json';
+import mapForetNo  from './data/map_foret_no.json';
+import mapClairiere from './data/map_clairiere.json';
 
 const MAPS: Record<string, MapData> = {
-  village_centre: villageCentre as MapData,
-  foret_ouest: foretOuest as MapData,
-  plaine_nord: plaineNord as MapData,
-  ruines_est: ruinesEst as MapData,
+  map_c:            mapC            as unknown as MapData,
+  map_n:            mapN            as unknown as MapData,
+  map_s:            mapS            as unknown as MapData,
+  map_e:            mapE            as unknown as MapData,
+  map_o:            mapO            as unknown as MapData,
+  map_se:           mapSE           as unknown as MapData,
+  map_dungeon_raz:  mapDungeonRaz   as unknown as MapData,
+  map_foret:        mapForet        as unknown as MapData,
+  map_foret_o:      mapForetO       as unknown as MapData,
+  map_foret_e:      mapForetE       as unknown as MapData,
+  map_foret_no:     mapForetNo      as unknown as MapData,
+  map_clairiere:    mapClairiere    as unknown as MapData,
 };
 
 export class MapManager {

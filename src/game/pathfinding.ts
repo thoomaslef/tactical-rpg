@@ -42,19 +42,6 @@ export function reconstructPath(target: GridPos, reached: Map<string, { dist: nu
   return path;
 }
 
-export function lineOfCells(a: GridPos, b: GridPos): GridPos[] {
-  const cells: GridPos[] = [];
-  let x = a.x, y = a.y;
-  const dx = Math.abs(b.x - x), dy = Math.abs(b.y - y);
-  const sx = x < b.x ? 1 : -1;
-  const sy = y < b.y ? 1 : -1;
-  let err = dx - dy;
-  while (true) {
-    cells.push({ x, y });
-    if (x === b.x && y === b.y) break;
-    const e2 = 2 * err;
-    if (e2 > -dy) { err -= dy; x += sx; }
-    if (e2 < dx) { err += dx; y += sy; }
-  }
-  return cells;
-}
+// FUTURE: ligne-de-vue (LOS) — algorithme de Bresenham entre deux cases.
+// Décommenter et brancher dans CombatScene quand le système de LOS sera implémenté.
+// export function lineOfCells(a: GridPos, b: GridPos): GridPos[] { ... }

@@ -42,9 +42,17 @@
       .stat.pm .value { color: #22c55e; }
       .stat.fl .value { color: #a855f7; }
       .spell .fcost { position: absolute; bottom: 2px; right: 4px; font-size: 10px; color: #a855f7; font-weight: 700; }
-      .spells { display: flex; gap: 8px; }
+      .spells {
+        display: flex; gap: 8px;
+        overflow-x: auto; max-width: calc(100vw - 320px);
+        -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory;
+        padding-bottom: 2px;
+      }
+      .spells::-webkit-scrollbar { height: 3px; }
+      .spells::-webkit-scrollbar-track { background: transparent; }
+      .spells::-webkit-scrollbar-thumb { background: #2a3142; border-radius: 2px; }
       .spell {
-        position: relative;
+        position: relative; scroll-snap-align: start; flex-shrink: 0;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         width: 64px; height: 64px; border-radius: 10px;
         background: linear-gradient(180deg, #1c2230, #131826);
@@ -56,6 +64,12 @@
       }
       .spell.active { border-color: #38bdf8; box-shadow: 0 0 0 2px rgba(56,189,248,.25), 0 0 20px rgba(56,189,248,.35); }
       .spell.disabled { opacity: .45; cursor: not-allowed; }
+      .spell.cooldown { opacity: .45; cursor: not-allowed; filter: grayscale(60%); }
+      .spell .cd-label {
+        position: absolute; top: 2px; left: 4px;
+        font-size: 12px; color: #ef4444; font-weight: 900;
+        text-shadow: 0 0 4px #000;
+      }
       .spell .icon { font-size: 24px; }
       .spell .cost { position: absolute; top: 2px; right: 4px; font-size: 11px; color: #38bdf8; font-weight: 700; }
       .spell .name { font-size: 10px; color: #c2c8d5; margin-top: 2px; letter-spacing: .3px; }
@@ -67,7 +81,11 @@
         font-weight: 700; letter-spacing: .5px; font-size: 13px; white-space: nowrap;
         min-height: 44px;
       }
-      @media (hover: hover) { .turn-btn:hover { filter: brightness(1.1); } }
+      .flee-btn {
+        background: linear-gradient(180deg, #78716c, #44403c);
+      }
+      .flee-btn:disabled { opacity: .35; cursor: not-allowed; }
+      @media (hover: hover) { .turn-btn:hover:not(:disabled) { filter: brightness(1.15); } }
 
       /* ── Turn info ── */
       #turnInfo {
@@ -136,8 +154,8 @@
         .turn-btn {
           order: 2;
           margin-left: 0;
-          padding: 8px 12px;
-          font-size: 12px;
+          padding: 8px 10px;
+          font-size: 11px;
           border-radius: 8px;
           align-self: stretch;
         }
@@ -201,6 +219,7 @@
           <div class="stat fl"><span class="label">Fluide</span><span class="value" id="fl">10/10</span></div>
         </div>
         <div class="spells" id="spells"></div>
+        <button class="turn-btn flee-btn" id="fleeBtn">FUIR ↩</button>
         <button class="turn-btn" id="endTurn">FIN DE TOUR</button>
       </div>
     </div>

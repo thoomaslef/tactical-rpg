@@ -2,19 +2,11 @@ export type Team = 'player' | 'enemy';
 
 export interface GridPos { x: number; y: number; }
 
-export interface Spell {
-  id: string;
-  name: string;
-  icon: string;
-  cost: number;       // PA cost
-  fluideCost: number; // Fluide cost
-  range: number;
-  minRange?: number;
-  damage?: number;
-  aoe?: number;
-  push?: number;
-  description: string;
-}
+// Spell est maintenant ISpell — tous les champs ont été renommés :
+//   cost → paCost | range → maxRange | damage → baseDamage{min,max}
+//   aoe → aoeSize | push → pushDistance
+export type { ISpell as Spell } from '../data/spells/ISpell';
+export type { SpellElement } from '../data/spells/ISpell';
 
 export interface Unit {
   id: string;
@@ -28,8 +20,18 @@ export interface Unit {
   maxPa: number;
   maxPm: number;
   initiative: number;
-  spells: Spell[];
+  spells: import('../data/spells/ISpell').ISpell[];
   sprite?: Phaser.GameObjects.Container;
+  /** Résistances élémentaires en % (valeur positive = résistance, négative = vulnérabilité) */
+  resistances?: Partial<Record<import('../data/spells/ISpell').SpellElement, number>>;
+  /** Propriétés optionnelles pour les boss */
+  isBoss?: boolean;
+  behavior?: 'melee' | 'range' | 'spectral' | 'fungal' | 'charge';
+  baseDamage?: number;
+  /** PA drainés accumulés pendant les tours ennemis — appliqués au prochain reset de tour */
+  drainedPa?: number;
+  /** PM drainés accumulés pendant les tours ennemis — appliqués au prochain reset de tour */
+  drainedPm?: number;
 }
 
 export type Mode = 'idle' | 'move' | 'cast';

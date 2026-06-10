@@ -1,6 +1,6 @@
 import {
   EquipSlot, Item, InventoryEntry, PlayerEquipment,
-  ITEMS, MAX_WEIGHT, emptyEquipment,
+  ITEMS, RESOURCE_CATALOG, MAX_WEIGHT, emptyEquipment,
   getEquipBonuses, currentWeight, PANOPLIES, isPanoplyComplete, getPanoplyProgress,
 } from '../game/items';
 
@@ -181,7 +181,7 @@ export class EquipmentMenu {
 
       const bonusRow = el('div', { display: 'flex', flexWrap: 'wrap', gap: '6px' });
       if (eb.hp)         bonusRow.appendChild(bonusBadge(`❤️ +${eb.hp} PV`, '#f87171', '#1c0808'));
-      if (eb.fluide)     bonusRow.appendChild(bonusBadge(`💧 +${eb.fluide} Magie`, '#a855f7', '#160d1e'));
+      if (eb.fluide)     bonusRow.appendChild(bonusBadge(`💧 +${eb.fluide} Fluide`, '#a855f7', '#160d1e'));
       if (eb.portee)     bonusRow.appendChild(bonusBadge(`🎯 +${eb.portee} Portée`, '#34d399', '#062011'));
       if (eb.resistance) bonusRow.appendChild(bonusBadge(`🛡️ +${eb.resistance} Résist.`, '#94a3b8', '#111827'));
       if (eb.pa)         bonusRow.appendChild(bonusBadge(`⚡ +${eb.pa} PA`, '#fde047', '#1a1500'));
@@ -269,16 +269,61 @@ export class EquipmentMenu {
 
     right.appendChild(el('div', { borderTop: '1px solid #1e2738', marginBottom: '12px' }));
 
-    // Inventory items
-    if (this.inventory.length === 0) {
-      const empty = el('div', { textAlign: 'center', color: '#2a3142', fontSize: '12px', padding: '24px 0' });
-      empty.textContent = 'Sac vide';
+    // Split inventory: equippable vs resources
+    const equipItems = this.inventory.filter(e => !!ITEMS[e.id]);
+    const resourceItems = this.inventory.filter(e => !ITEMS[e.id]);
+
+    // ── Équipement dans le sac ──
+    if (equipItems.length === 0) {
+      const empty = el('div', { textAlign: 'center', color: '#2a3142', fontSize: '12px', padding: '16px 0' });
+      empty.textContent = 'Aucun équipement';
       right.appendChild(empty);
     } else {
-      for (const entry of this.inventory) {
+      for (const entry of equipItems) {
         const card = this.makeItemCard(entry);
         if (card) right.appendChild(card);
       }
+    }
+
+    // ── Ressources ──
+    const resSep = el('div', { borderTop: '1px solid #1e2738', margin: '14px 0 10px' });
+    right.appendChild(resSep);
+
+    const resTitle = el('div', { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' });
+    const resTitleLeft = el('span', { fontSize: '13px', fontWeight: '700', color: '#e6e8ee' });
+    resTitleLeft.textContent = '🌿 RESSOURCES';
+    const resCount = el('span', { fontSize: '11px', color: '#8b93a7' });
+    resCount.textContent = `${resourceItems.length} type${resourceItems.length !== 1 ? 's' : ''}`;
+    resTitle.append(resTitleLeft, resCount);
+    right.appendChild(resTitle);
+
+    if (resourceItems.length === 0) {
+      const emptyRes = el('div', { textAlign: 'center', color: '#2a3142', fontSize: '12px', padding: '12px 0' });
+      emptyRes.textContent = 'Aucune ressource';
+      right.appendChild(emptyRes);
+    } else {
+      const resGrid = el('div', { display: 'flex', flexWrap: 'wrap', gap: '8px' });
+      for (const entry of resourceItems) {
+        const res = RESOURCE_CATALOG[entry.id];
+        const name = res?.name ?? entry.id;
+        const icon = res?.icon ?? '📦';
+        const chip = el('div', {
+          display: 'flex', alignItems: 'center', gap: '7px',
+          background: '#0b0f1a', border: '1px solid #1e2738',
+          borderRadius: '8px', padding: '8px 10px',
+        });
+        const chipIcon = el('span', { fontSize: '18px' });
+        chipIcon.textContent = icon;
+        const chipInfo = el('div', {});
+        const chipName = el('div', { fontSize: '12px', fontWeight: '600', color: '#c8ccd6' });
+        chipName.textContent = name;
+        const chipQty = el('div', { fontSize: '11px', color: '#4ade80', fontWeight: '700' });
+        chipQty.textContent = `×${entry.qty}`;
+        chipInfo.append(chipName, chipQty);
+        chip.append(chipIcon, chipInfo);
+        resGrid.appendChild(chip);
+      }
+      right.appendChild(resGrid);
     }
 
     body.appendChild(right);
@@ -364,7 +409,7 @@ export class EquipmentMenu {
 
     const statLine = el('div', { fontSize: '11px', display: 'flex', gap: '8px', flexWrap: 'wrap' });
     if (item.bonuses.hp)         statLine.appendChild(statTag(`❤️ +${item.bonuses.hp} PV`,      '#f87171', '#1c0808'));
-    if (item.bonuses.fluide)     statLine.appendChild(statTag(`💧 +${item.bonuses.fluide} Magie`, '#a855f7', '#160d1e'));
+    if (item.bonuses.fluide)     statLine.appendChild(statTag(`💧 +${item.bonuses.fluide} Fluide`, '#a855f7', '#160d1e'));
     if (item.bonuses.resistance) statLine.appendChild(statTag(`🛡️ +${item.bonuses.resistance} Résist.`, '#94a3b8', '#111827'));
     statLine.appendChild(statTag(`⚖️ ${item.weight}`, '#4a5568', '#0b0f1a'));
     info.append(nameLine, statLine);

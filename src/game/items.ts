@@ -1,4 +1,4 @@
-import { Spell } from '../types';
+import { ISpell } from '../data/spells/ISpell';
 
 export type EquipSlot = 'helmet' | 'chest' | 'legs' | 'boots' | 'weapon' | 'offhand' | 'ring1' | 'ring2' | 'amulet' | 'cape';
 
@@ -43,28 +43,28 @@ export interface PanoplyDef {
 export const ITEMS: Record<string, Item> = {
   casque_fer: {
     id: 'casque_fer', name: 'Casque de Fer', icon: '⛑️', slot: 'helmet',
-    weight: 5, bonuses: { hp: 10, fluide: 5 },
-    description: '+10 PV max · +5 Magie max',
+    weight: 5, bonuses: { hp: 5, fluide: 3 },
+    description: '+5 PV max · +3 Fluide max',
   },
   torse_fer: {
     id: 'torse_fer', name: 'Plastron de Fer', icon: '🥋', slot: 'chest',
-    weight: 15, bonuses: { hp: 12, resistance: 3 },
-    description: '+12 PV max · +3 Résistance',
+    weight: 15, bonuses: { hp: 12 },
+    description: '+12 PV max',
   },
   jambieres_fer: {
     id: 'jambieres_fer', name: 'Jambières de Fer', icon: '👖', slot: 'legs',
-    weight: 10, bonuses: { hp: 8, resistance: 2 },
-    description: '+8 PV max · +2 Résistance',
+    weight: 10, bonuses: { hp: 8 },
+    description: '+8 PV max',
   },
   bottes_fer: {
     id: 'bottes_fer', name: 'Bottes de Fer', icon: '👟', slot: 'boots',
-    weight: 8, bonuses: { hp: 5, portee: 1 },
-    description: '+5 PV max · +1 Portée',
+    weight: 8, bonuses: { hp: 5 },
+    description: '+5 PV max',
   },
   arc_fer: {
     id: 'arc_fer', name: 'Arc de Fer', icon: '🏹', slot: 'weapon',
-    weight: 12, bonuses: { portee: 1, meleeDamage: 6 },
-    description: '+1 Portée · Corps à corps : 6 dégâts',
+    weight: 12, bonuses: { meleeDamage: 6 },
+    description: 'Corps à corps : 6 dégâts',
   },
   epee_fer: {
     id: 'epee_fer', name: 'Épée de Fer', icon: '⚔️', slot: 'weapon',
@@ -73,23 +73,28 @@ export const ITEMS: Record<string, Item> = {
   },
   bouclier_fer: {
     id: 'bouclier_fer', name: 'Bouclier de Fer', icon: '🛡️', slot: 'offhand',
-    weight: 15, bonuses: { hp: 5, resistance: 4 },
-    description: '+5 PV max · +4 Résistance',
+    weight: 15, bonuses: { hp: 5 },
+    description: '+5 PV max',
   },
   anneau_fer: {
     id: 'anneau_fer', name: 'Anneau de Fer', icon: '💍', slot: 'ring1',
     weight: 2, bonuses: { hp: 3, fluide: 3 },
-    description: '+3 PV max · +3 Magie max',
+    description: '+3 PV max · +3 Fluide max',
   },
   amulette_fer: {
     id: 'amulette_fer', name: 'Amulette de Fer', icon: '📿', slot: 'amulet',
-    weight: 3, bonuses: { fluide: 5, portee: 1 },
-    description: '+5 Magie max · +1 Portée',
+    weight: 3, bonuses: { fluide: 2 },
+    description: '+2 Fluide max',
   },
   cape_fer: {
     id: 'cape_fer', name: 'Cape de Fer', icon: '🧣', slot: 'cape',
     weight: 5, bonuses: { hp: 6, fluide: 2 },
-    description: '+6 PV max · +2 Magie max',
+    description: '+6 PV max · +2 Fluide max',
+  },
+  defense_razmotek: {
+    id: 'defense_razmotek', name: 'Défense de Razmotek', icon: '🦷', slot: 'weapon',
+    weight: 8, bonuses: { meleeDamage: 10 },
+    description: 'La dent du boss vaincu. Corps à corps : +10 dégâts.',
   },
 };
 
@@ -100,35 +105,24 @@ export const PANOPLIES: PanoplyDef[] = [
     id: 'panoplie_fer',
     name: 'Panoplie de Fer',
     slotRequirements: {
-      helmet: 'casque_fer',
-      chest: 'torse_fer',
-      legs: 'jambieres_fer',
-      boots: 'bottes_fer',
-      weapon: 'arc_fer',
+      helmet:  'casque_fer',
+      chest:   'torse_fer',
+      legs:    'jambieres_fer',
+      boots:   'bottes_fer',
       offhand: 'bouclier_fer',
-      ring1: 'anneau_fer',
-      ring2: 'anneau_fer',
-      amulet: 'amulette_fer',
-      cape: 'cape_fer',
+      ring1:   'anneau_fer',
+      ring2:   'anneau_fer',
+      amulet:  'amulette_fer',
+      cape:    'cape_fer',
     },
-    bonus: { pa: 1, pm: 1 },
+    bonus: { pa: 1 },
   },
 ];
 
 export function emptyEquipment(): PlayerEquipment { return {}; }
 
 export function startingInventory(): InventoryEntry[] {
-  return [
-    { id: 'casque_fer', qty: 1 },
-    { id: 'torse_fer', qty: 1 },
-    { id: 'jambieres_fer', qty: 1 },
-    { id: 'bottes_fer', qty: 1 },
-    { id: 'arc_fer', qty: 1 },
-    { id: 'bouclier_fer', qty: 1 },
-    { id: 'anneau_fer', qty: 2 },
-    { id: 'amulette_fer', qty: 1 },
-    { id: 'cape_fer', qty: 1 },
-  ];
+  return [];
 }
 
 export function isPanoplyComplete(equip: PlayerEquipment, p: PanoplyDef): boolean {
@@ -171,7 +165,7 @@ export function getEquipBonuses(equip: PlayerEquipment): EquipBonuses {
   return result;
 }
 
-export function getMeleeSpell(equip: PlayerEquipment): Spell {
+export function getMeleeSpell(equip: PlayerEquipment): ISpell {
   const weapon = equip.weapon ? ITEMS[equip.weapon] : null;
   const dmg = weapon?.bonuses.meleeDamage ?? 5;
   const icon = weapon ? weapon.icon : '👊';
@@ -180,11 +174,13 @@ export function getMeleeSpell(equip: PlayerEquipment): Spell {
     id: 'melee',
     name,
     icon,
-    cost: 2,
+    paCost: 2,
     fluideCost: 0,
-    range: 1,
+    maxRange: 1,
     minRange: 1,
-    damage: dmg,
+    baseDamage: { min: dmg, max: dmg },
+    element: 'neutre',
+    isModifiable: false,
     description: weapon
       ? `Corps à corps avec ${weapon.name} — ${dmg} dégâts. Adjacent.`
       : `Coups de poings — ${dmg} dégâts. Adjacent.`,
@@ -194,6 +190,32 @@ export function getMeleeSpell(equip: PlayerEquipment): Spell {
 export function chestInventory(): InventoryEntry[] {
   return Object.keys(ITEMS).map(id => ({ id, qty: id === 'anneau_fer' ? 2 : 1 }));
 }
+
+// ── Catalogue de ressources non-équipables ────────────────────────────────────
+export interface ResourceItem { id: string; name: string; icon: string; }
+
+export const RESOURCE_CATALOG: Record<string, ResourceItem> = {
+  // Bûcheronnage
+  ash_wood:        { id: 'ash_wood',        name: 'Bois de Frêne',             icon: '🪵' },
+  oak_wood:        { id: 'oak_wood',        name: 'Bois de Chêne',             icon: '🪵' },
+  pine_resin:      { id: 'pine_resin',      name: 'Résine Ardente',            icon: '🍯' },
+  dark_alder_wood: { id: 'dark_alder_wood', name: "Bois d'Aulne Noir",         icon: '🪵' },
+  soul_wood:       { id: 'soul_wood',       name: "Bois d'Âme Rose",           icon: '🌸' },
+  hydric_core:     { id: 'hydric_core',     name: 'Cœur Hydrique',             icon: '💧' },
+  venom_bark:      { id: 'venom_bark',      name: 'Écorce Vénéneuse',          icon: '🌿' },
+  ice_crystal:     { id: 'ice_crystal',     name: "Cristal de Glace d'Épicéa", icon: '❄️' },
+  thunder_wood:    { id: 'thunder_wood',    name: 'Bois Foudroyé',             icon: '⚡' },
+  eternity_shard:  { id: 'eternity_shard',  name: "Fragment d'Éternité",       icon: '✨' },
+  // Objets clés / quêtes
+  clef_antre_razmotek:  { id: 'clef_antre_razmotek',  name: "Clef de l'Antre du Razmotek", icon: '🔑' },
+  // Matériaux de monstres
+  rat_fur:              { id: 'rat_fur',               name: 'Poils de Rat',               icon: '🐀' },
+  cuir_rumineuse:       { id: 'cuir_rumineuse',        name: 'Cuir de Rumineuse',           icon: '🐄' },
+  psylo:                { id: 'psylo',                 name: 'Psylo',                        icon: '🍄' },
+  defense_defoncier:    { id: 'defense_defoncier',     name: 'Défense de Défoncier',          icon: '🐗' },
+  // Consommables spéciaux
+  xp_scroll_max:        { id: 'xp_scroll_max',         name: 'Élixir du Maître',            icon: '⭐' },
+};
 
 export function currentWeight(equip: PlayerEquipment, inv: InventoryEntry[]): number {
   let w = 0;
