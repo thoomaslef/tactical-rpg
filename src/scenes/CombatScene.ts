@@ -1364,6 +1364,21 @@ export class CombatScene extends Phaser.Scene {
       if (Math.random() < 0.30) drops.push({ id: 'defense_defoncier', qty: 1 });
     }
 
+    // Panoplie de la Forêt : 20% par mob de forêt concerné
+    for (let i = 0; i < rumiCount; i++) {
+      if (Math.random() < 0.20) drops.push({ id: 'anneau_foret', qty: 1 });
+    }
+    const groinardCount = this.monsters.filter(m => m.name === 'Groinard').length;
+    for (let i = 0; i < groinardCount; i++) {
+      if (Math.random() < 0.20) drops.push({ id: 'anneau_foret', qty: 1 });
+    }
+    for (let i = 0; i < sporrinCount; i++) {
+      if (Math.random() < 0.20) drops.push({ id: 'amulette_foret', qty: 1 });
+    }
+    for (let i = 0; i < defoncierCount; i++) {
+      if (Math.random() < 0.20) drops.push({ id: 'casque_foret', qty: 1 });
+    }
+
     return drops;
   }
 
