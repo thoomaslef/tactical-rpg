@@ -260,6 +260,11 @@ export class WorldScene extends Phaser.Scene {
     return this.mapData.exits.find(e => e.x === gx && e.y === gy);
   }
 
+  /** Vrai si l'exit vers la forêt est verrouillé (quête 3 non terminée). */
+  private isExitLocked(exit: MapExit): boolean {
+    return exit.targetMap.startsWith('map_foret') && !gameState.quest3RewardGiven;
+  }
+
   private getMonsterAt(x: number, y: number): MonsterSpawn | undefined {
     return this.mapData.spawns.find(s =>
       s.x === x && s.y === y && !this.defeatedMonsters.includes(s.id)
@@ -580,26 +585,26 @@ export class WorldScene extends Phaser.Scene {
       else                                          arrow = '◀'; // Ouest
 
       // Losange de surbrillance
+      const locked = this.isExitLocked(exit);
+      const fillCol = locked ? 0x991b1b : 0x38bdf8;
+      const lineCol = locked ? 0xef4444 : 0x38bdf8;
+      const diamond = [
+        { x: cx,                    y: cy - this._tileH / 2 },
+        { x: cx + this._tileW / 2,  y: cy },
+        { x: cx,                    y: cy + this._tileH / 2 },
+        { x: cx - this._tileW / 2,  y: cy },
+      ];
       const g = this.add.graphics().setDepth(cy + 1);
-      g.fillStyle(0x38bdf8, 0.30);
-      g.fillPoints([
-        { x: cx,                    y: cy - this._tileH / 2 },
-        { x: cx + this._tileW / 2,  y: cy },
-        { x: cx,                    y: cy + this._tileH / 2 },
-        { x: cx - this._tileW / 2,  y: cy },
-      ], true);
-      g.lineStyle(2, 0x38bdf8, 0.9);
-      g.strokePoints([
-        { x: cx,                    y: cy - this._tileH / 2 },
-        { x: cx + this._tileW / 2,  y: cy },
-        { x: cx,                    y: cy + this._tileH / 2 },
-        { x: cx - this._tileW / 2,  y: cy },
-      ], true);
-      this.tweens.add({ targets: g, alpha: 0.4, yoyo: true, repeat: -1, duration: 950 });
+      g.fillStyle(fillCol, 0.30);
+      g.fillPoints(diamond, true);
+      g.lineStyle(2, lineCol, 0.9);
+      g.strokePoints(diamond, true);
+      this.tweens.add({ targets: g, alpha: 0.15, yoyo: true, repeat: -1, duration: locked ? 1400 : 950 });
 
-      // Flèche animée au-dessus
-      const txt = this.add.text(cx, cy - this._tileH / 2 - 12, arrow, {
-        fontSize: '16px', color: '#7dd3fc', fontStyle: 'bold',
+      // Flèche ou cadenas animé au-dessus
+      const label = locked ? '🔒' : arrow;
+      const txt = this.add.text(cx, cy - this._tileH / 2 - 12, label, {
+        fontSize: '16px', color: locked ? '#fca5a5' : '#7dd3fc', fontStyle: 'bold',
         stroke: '#000000', strokeThickness: 3,
       }).setOrigin(0.5).setDepth(cy + 2);
       this.tweens.add({ targets: txt, y: txt.y - 6, yoyo: true, repeat: -1, duration: 750 });
@@ -1554,6 +1559,10 @@ export class WorldScene extends Phaser.Scene {
   // ── Transitions ───────────────────────────────────────────────────────────
 
   private triggerTransition(exit: MapExit) {
+    if (this.isExitLocked(exit)) {
+      this.showMessage('⚔️ Vaincez le Razmotek pour quitter Hélia.');
+      return;
+    }
     // Vérifier si les sorties sont bloquées
     if (!this.roomCleared()) {
       this.showMessage('Vaincre les ennemis pour continuer !');
