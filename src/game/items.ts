@@ -8,6 +8,8 @@ export interface ItemBonuses {
   resistance?: number;
   portee?: number;
   meleeDamage?: number;
+  terre?: number;
+  feu?: number;
 }
 
 export interface EquipBonuses {
@@ -17,6 +19,8 @@ export interface EquipBonuses {
   portee: number;
   pa: number;
   pm: number;
+  terre: number;
+  feu: number;
 }
 
 export interface Item {
@@ -96,6 +100,21 @@ export const ITEMS: Record<string, Item> = {
     weight: 8, bonuses: { meleeDamage: 10 },
     description: 'La dent du boss vaincu. Corps à corps : +10 dégâts.',
   },
+  anneau_foret: {
+    id: 'anneau_foret', name: 'Anneau de la Forêt', icon: '🌿', slot: 'ring1',
+    weight: 2, bonuses: { terre: 10, feu: 10 },
+    description: '+10% dégâts Terre · +10% dégâts Feu',
+  },
+  amulette_foret: {
+    id: 'amulette_foret', name: 'Amulette de la Forêt', icon: '🍀', slot: 'amulet',
+    weight: 3, bonuses: { fluide: 10, hp: 10 },
+    description: '+10 Fluide max · +10 PV max',
+  },
+  casque_foret: {
+    id: 'casque_foret', name: 'Casque de la Forêt', icon: '🌲', slot: 'helmet',
+    weight: 6, bonuses: { terre: 10, feu: 10, resistance: 3 },
+    description: '+10% dégâts Terre · +10% dégâts Feu · +3 Résistances',
+  },
 };
 
 export const MAX_WEIGHT = 1000;
@@ -114,6 +133,17 @@ export const PANOPLIES: PanoplyDef[] = [
       ring2:   'anneau_fer',
       amulet:  'amulette_fer',
       cape:    'cape_fer',
+    },
+    bonus: { pa: 1 },
+  },
+  {
+    id: 'panoplie_foret',
+    name: 'Panoplie de la Forêt',
+    slotRequirements: {
+      helmet: 'casque_foret',
+      ring1:  'anneau_foret',
+      ring2:  'anneau_foret',
+      amulet: 'amulette_foret',
     },
     bonus: { pa: 1 },
   },
@@ -142,7 +172,7 @@ export function getPanoplyProgress(equip: PlayerEquipment, p: PanoplyDef): { cou
 }
 
 export function getEquipBonuses(equip: PlayerEquipment): EquipBonuses {
-  const result: EquipBonuses = { hp: 0, fluide: 0, resistance: 0, portee: 0, pa: 0, pm: 0 };
+  const result: EquipBonuses = { hp: 0, fluide: 0, resistance: 0, portee: 0, pa: 0, pm: 0, terre: 0, feu: 0 };
   for (const itemId of Object.values(equip)) {
     if (!itemId) continue;
     const item = ITEMS[itemId];
@@ -151,6 +181,8 @@ export function getEquipBonuses(equip: PlayerEquipment): EquipBonuses {
     result.fluide += item.bonuses.fluide ?? 0;
     result.resistance += item.bonuses.resistance ?? 0;
     result.portee += item.bonuses.portee ?? 0;
+    result.terre += item.bonuses.terre ?? 0;
+    result.feu += item.bonuses.feu ?? 0;
   }
   for (const p of PANOPLIES) {
     if (isPanoplyComplete(equip, p)) {
@@ -160,6 +192,8 @@ export function getEquipBonuses(equip: PlayerEquipment): EquipBonuses {
       result.portee += p.bonus.portee ?? 0;
       result.pa += p.bonus.pa ?? 0;
       result.pm += p.bonus.pm ?? 0;
+      result.terre += p.bonus.terre ?? 0;
+      result.feu += p.bonus.feu ?? 0;
     }
   }
   return result;
@@ -188,7 +222,10 @@ export function getMeleeSpell(equip: PlayerEquipment): ISpell {
 }
 
 export function chestInventory(): InventoryEntry[] {
-  return Object.keys(ITEMS).map(id => ({ id, qty: id === 'anneau_fer' ? 2 : 1 }));
+  return Object.keys(ITEMS).map(id => ({
+    id,
+    qty: (id === 'anneau_fer' || id === 'anneau_foret') ? 2 : 1,
+  }));
 }
 
 // ── Catalogue de ressources non-équipables ────────────────────────────────────

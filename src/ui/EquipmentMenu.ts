@@ -170,7 +170,7 @@ export class EquipmentMenu {
 
     // Equipment bonus summary
     const eb = getEquipBonuses(this.equip);
-    const hasBonus = eb.hp > 0 || eb.fluide > 0 || eb.resistance > 0 || eb.portee > 0 || eb.pa > 0 || eb.pm > 0;
+    const hasBonus = eb.hp > 0 || eb.fluide > 0 || eb.resistance > 0 || eb.portee > 0 || eb.pa > 0 || eb.pm > 0 || eb.terre > 0 || eb.feu > 0;
     if (hasBonus) {
       const bonusSep = el('div', { borderTop: '1px solid #1e2738', margin: '14px 0 10px' });
       left.appendChild(bonusSep);
@@ -186,6 +186,8 @@ export class EquipmentMenu {
       if (eb.resistance) bonusRow.appendChild(bonusBadge(`🛡️ +${eb.resistance} Résist.`, '#94a3b8', '#111827'));
       if (eb.pa)         bonusRow.appendChild(bonusBadge(`⚡ +${eb.pa} PA`, '#fde047', '#1a1500'));
       if (eb.pm)         bonusRow.appendChild(bonusBadge(`👟 +${eb.pm} PM`, '#a78bfa', '#100d1e'));
+      if (eb.terre)      bonusRow.appendChild(bonusBadge(`🌿 +${eb.terre}% Terre`, '#84cc16', '#0c1a00'));
+      if (eb.feu)        bonusRow.appendChild(bonusBadge(`🔥 +${eb.feu}% Feu`, '#fb923c', '#1a0800'));
       left.appendChild(bonusRow);
     }
 

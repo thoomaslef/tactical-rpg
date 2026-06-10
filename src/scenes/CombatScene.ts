@@ -989,8 +989,10 @@ export class CombatScene extends Phaser.Scene {
 
     // Calcul des dégâts : bonus élémentaires + bonus niveau
     const _finalDmgPct = finalDamagePercent(getLevel(this.playerXP));
+    const _eb = getEquipBonuses(this.playerEquipment);
+    const _statsWithEquip = { ...this.playerStats, terre: this.playerStats.terre + _eb.terre, feu: this.playerStats.feu + _eb.feu };
     const rawDamage = caster.team === 'player'
-      ? this.spellManager.computeDamage(spell, this.playerStats, _finalDmgPct, 0)
+      ? this.spellManager.computeDamage(spell, _statsWithEquip, _finalDmgPct, 0)
       : (spell.baseDamage ? spell.baseDamage.min + Math.floor(Math.random() * (spell.baseDamage.max - spell.baseDamage.min + 1)) : 0);
 
     /** Applique le recul orthogonal à une cible depuis la direction caster→cible */
