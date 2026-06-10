@@ -6,7 +6,6 @@ import { SPELLS } from '../game/spells';
 import { HUD } from '../ui/hud';
 import { PlayerStats, emptyStats, maxHp, maxPa, maxPm, maxMagic, applyXpBonus } from '../game/stats';
 import { PlayerEquipment, InventoryEntry, emptyEquipment, getEquipBonuses, getMeleeSpell } from '../game/items';
-import { gameState } from '../game/gameState';
 
 interface TileGfx {
   poly: Phaser.GameObjects.Polygon;
@@ -39,8 +38,6 @@ export class CombatScene extends Phaser.Scene {
   private returnY = 4;
   private defeatedMonsters: string[] = [];
   private monsterId = '';
-  private monsterName = 'Ennemi';
-  private monsterHp = 50;
   private playerStats: PlayerStats = emptyStats();
   private playerEquipment: PlayerEquipment = emptyEquipment();
   private playerInventory: InventoryEntry[] = [];
@@ -51,7 +48,7 @@ export class CombatScene extends Phaser.Scene {
     super('CombatScene');
   }
 
-  init(data: { xp?: number; playerStats?: PlayerStats; equipment?: PlayerEquipment; inventory?: InventoryEntry[]; mapId?: string; playerX?: number; playerY?: number; defeatedMonsters?: string[]; monsterId?: string; monsterName?: string; monsterHp?: number }) {
+  init(data: { xp?: number; playerStats?: PlayerStats; equipment?: PlayerEquipment; inventory?: InventoryEntry[]; mapId?: string; playerX?: number; playerY?: number; defeatedMonsters?: string[]; monsterId?: string }) {
     this.playerXP = data?.xp ?? 0;
     this.playerStats = data?.playerStats ? { ...data.playerStats } : emptyStats();
     this.playerEquipment = data?.equipment ? { ...data.equipment } : emptyEquipment();
@@ -64,8 +61,6 @@ export class CombatScene extends Phaser.Scene {
     this.returnY = data?.playerY ?? 4;
     this.defeatedMonsters = data?.defeatedMonsters ? [...data.defeatedMonsters] : [];
     this.monsterId = data?.monsterId ?? '';
-    this.monsterName = data?.monsterName ?? 'Ennemi';
-    this.monsterHp = data?.monsterHp ?? 50;
     this.damageDealt = 0;
     this.turnsUsed = 0;
     this.busy = false;
@@ -87,7 +82,7 @@ export class CombatScene extends Phaser.Scene {
     // Units
     const eb = getEquipBonuses(this.playerEquipment);
     const archer: Unit = this.makeUnit('hero', 'Archer', 'player', { x: 4, y: 7 }, maxHp(this.playerStats) + eb.hp, maxPa(this.playerStats) + eb.pa, maxPm(this.playerStats) + eb.pm, 12);
-    const monster: Unit = this.makeUnit('mob', this.monsterName, 'enemy', { x: 10, y: 7 }, this.monsterHp, 6, 3, 8);
+    const monster: Unit = this.makeUnit('mob', 'Ennemi', 'enemy', { x: 10, y: 7 }, 50, 6, 3, 8);
     archer.spells = [getMeleeSpell(this.playerEquipment), SPELLS.arrow, SPELLS.explosive, SPELLS.push];
     monster.spells = [SPELLS.arrow];
     this.units = [archer, monster];
@@ -696,9 +691,6 @@ export class CombatScene extends Phaser.Scene {
         if (heroPanel) heroPanel.style.display = 'none';
         if (enemyPanel) enemyPanel.style.display = 'none';
         if (victory && this.monsterId) {
-          if (this.monsterId === 'm_village_2' && !gameState.hasKey) {
-            gameState.hasKey = true;
-          }
           this.scene.start('WorldScene', {
             xp: newXP,
             playerStats: this.playerStats,
