@@ -280,20 +280,21 @@ export class WorldScene extends Phaser.Scene {
     const mh = this.mapData.height ?? DEFAULT_MAP_H;
     const nbW = (nb: MapData) => nb.width  ?? DEFAULT_MAP_W;
     const nbH = (nb: MapData) => nb.height ?? DEFAULT_MAP_H;
+    const blocked = this.mapData.blockedCoordDirs ?? [];
 
-    if (gx === 1 && gy === 1) {
+    if (gx === 1 && gy === 1 && !blocked.includes('N')) {
       const nb = this.mapManager.getByCoords(cx, cy - 1);
       if (nb) return { targetMap: nb.id, targetX: 1, targetY: nbH(nb) - 2 };
     }
-    if (gx === mw - 2 && gy === mh - 2) {
+    if (gx === mw - 2 && gy === mh - 2 && !blocked.includes('S')) {
       const nb = this.mapManager.getByCoords(cx, cy + 1);
       if (nb) return { targetMap: nb.id, targetX: nbW(nb) - 2, targetY: 1 };
     }
-    if (gx === mw - 2 && gy === 1) {
+    if (gx === mw - 2 && gy === 1 && !blocked.includes('E')) {
       const nb = this.mapManager.getByCoords(cx + 1, cy);
       if (nb) return { targetMap: nb.id, targetX: 1, targetY: 1 };
     }
-    if (gx === 1 && gy === mh - 2) {
+    if (gx === 1 && gy === mh - 2 && !blocked.includes('W')) {
       const nb = this.mapManager.getByCoords(cx - 1, cy);
       if (nb) return { targetMap: nb.id, targetX: nbW(nb) - 2, targetY: nbH(nb) - 2 };
     }
@@ -634,14 +635,16 @@ export class WorldScene extends Phaser.Scene {
     const hh = this._tileH / 2;
 
     // Coins visuels du losange iso : haut=(1,1), bas=(mw-2,mh-2), droite=(mw-2,1), gauche=(1,mh-2)
+    const blockedDirs = this.mapData.blockedCoordDirs ?? [];
     const dirs = [
-      { dx:  0, dy: -1, arrow: '▲', egx: 1,      egy: 1,      ax:  0,       ay: -hh - 14 },
-      { dx:  0, dy: +1, arrow: '▼', egx: mw - 2,  egy: mh - 2, ax:  0,       ay:  hh + 6  },
-      { dx: +1, dy:  0, arrow: '▶', egx: mw - 2,  egy: 1,      ax:  hw + 10, ay:  0        },
-      { dx: -1, dy:  0, arrow: '◀', egx: 1,       egy: mh - 2, ax: -hw - 10, ay:  0        },
+      { dir: 'N' as const, dx:  0, dy: -1, arrow: '▲', egx: 1,      egy: 1,      ax:  0,       ay: -hh - 14 },
+      { dir: 'S' as const, dx:  0, dy: +1, arrow: '▼', egx: mw - 2,  egy: mh - 2, ax:  0,       ay:  hh + 6  },
+      { dir: 'E' as const, dx: +1, dy:  0, arrow: '▶', egx: mw - 2,  egy: 1,      ax:  hw + 10, ay:  0        },
+      { dir: 'W' as const, dx: -1, dy:  0, arrow: '◀', egx: 1,       egy: mh - 2, ax: -hw - 10, ay:  0        },
     ];
 
-    for (const { dx, dy, arrow, egx, egy, ax, ay } of dirs) {
+    for (const { dir, dx, dy, arrow, egx, egy, ax, ay } of dirs) {
+      if (blockedDirs.includes(dir)) continue;
       const nb = this.mapManager.getByCoords(cx + dx, cy + dy);
       if (!nb) continue;
 

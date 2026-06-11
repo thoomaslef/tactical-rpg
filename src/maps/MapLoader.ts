@@ -103,6 +103,8 @@ export interface MapData {
   decorations?: DecorationSpawn[];
   /** Bloque toutes les sorties tant que des monstres sont vivants */
   blockExitsUntilCleared?: boolean;
+  /** Directions coordonnées à ne pas générer automatiquement ('N' | 'S' | 'E' | 'W') */
+  blockedCoordDirs?: ('N' | 'S' | 'E' | 'W')[];
   /** En donjon : cliquer un monstre engage tous les monstres vivants */
   groupFight?: boolean;
   /**
