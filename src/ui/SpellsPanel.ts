@@ -110,8 +110,9 @@ export class SpellsPanel {
     // ── Séparateur ──
     panel.appendChild(sep());
 
-    // ── Cartes de sorts ──
-    for (const spell of ALL_SPELLS) {
+    // ── Cartes de sorts (triées par niveau de déblocage) ──
+    const sortedSpells = [...ALL_SPELLS].sort((a, b) => (a.learnLevel ?? 1) - (b.learnLevel ?? 1));
+    for (const spell of sortedSpells) {
       const isLocked = (spell.learnLevel ?? 1) > playerLevel;
       panel.appendChild(this.makeCard(spell, isLocked));
     }
