@@ -265,30 +265,37 @@ export class WorldScene extends Phaser.Scene {
     return exit.targetMap.startsWith('map_foret') && !gameState.quest3RewardGiven;
   }
 
-  /** Retourne un exit basé sur les coordonnées de la map pour la case centrale de bordure (gx, gy), ou null. */
+  /**
+   * Retourne un exit coordonnées pour les 4 coins visuels du losange isométrique :
+   *  (1,1)       = sommet haut   → Nord   (↑ écran)
+   *  (mw-2,mh-2) = sommet bas    → Sud    (↓ écran)
+   *  (mw-2,1)    = sommet droite → Est    (→ écran)
+   *  (1,mh-2)    = sommet gauche → Ouest  (← écran)
+   */
   private getCoordExit(gx: number, gy: number): { targetMap: string; targetX: number; targetY: number } | null {
     const coords = this.mapData.coords;
     if (!coords) return null;
     const [cx, cy] = coords;
     const mw = this.mapData.width  ?? DEFAULT_MAP_W;
     const mh = this.mapData.height ?? DEFAULT_MAP_H;
-    const midX = Math.floor(mw / 2);
-    const midY = Math.floor(mh / 2);
-    if (gx === midX && gy === 1) {
+    const nbW = (nb: MapData) => nb.width  ?? DEFAULT_MAP_W;
+    const nbH = (nb: MapData) => nb.height ?? DEFAULT_MAP_H;
+
+    if (gx === 1 && gy === 1) {
       const nb = this.mapManager.getByCoords(cx, cy - 1);
-      if (nb) return { targetMap: nb.id, targetX: midX, targetY: (nb.height ?? DEFAULT_MAP_H) - 2 };
+      if (nb) return { targetMap: nb.id, targetX: 1, targetY: nbH(nb) - 2 };
     }
-    if (gx === midX && gy === mh - 2) {
+    if (gx === mw - 2 && gy === mh - 2) {
       const nb = this.mapManager.getByCoords(cx, cy + 1);
-      if (nb) return { targetMap: nb.id, targetX: midX, targetY: 1 };
+      if (nb) return { targetMap: nb.id, targetX: nbW(nb) - 2, targetY: 1 };
     }
-    if (gx === 1 && gy === midY) {
-      const nb = this.mapManager.getByCoords(cx - 1, cy);
-      if (nb) return { targetMap: nb.id, targetX: (nb.width ?? DEFAULT_MAP_W) - 2, targetY: midY };
-    }
-    if (gx === mw - 2 && gy === midY) {
+    if (gx === mw - 2 && gy === 1) {
       const nb = this.mapManager.getByCoords(cx + 1, cy);
-      if (nb) return { targetMap: nb.id, targetX: 1, targetY: midY };
+      if (nb) return { targetMap: nb.id, targetX: 1, targetY: 1 };
+    }
+    if (gx === 1 && gy === mh - 2) {
+      const nb = this.mapManager.getByCoords(cx - 1, cy);
+      if (nb) return { targetMap: nb.id, targetX: nbW(nb) - 2, targetY: nbH(nb) - 2 };
     }
     return null;
   }
@@ -625,41 +632,36 @@ export class WorldScene extends Phaser.Scene {
     const [cx, cy] = this.mapData.coords;
     const hw = this._tileW / 2;
     const hh = this._tileH / 2;
-    const midGx = Math.floor(mw / 2);
-    const midGy = Math.floor(mh / 2);
 
+    // Coins visuels du losange iso : haut=(1,1), bas=(mw-2,mh-2), droite=(mw-2,1), gauche=(1,mh-2)
     const dirs = [
-      { dx: 0, dy: -1, arrow: '▲', horiz: true,  bord: 1 },
-      { dx: 0, dy: +1, arrow: '▼', horiz: true,  bord: mh - 2 },
-      { dx: -1, dy: 0, arrow: '◀', horiz: false, bord: 1 },
-      { dx: +1, dy: 0, arrow: '▶', horiz: false, bord: mw - 2 },
+      { dx:  0, dy: -1, arrow: '▲', egx: 1,      egy: 1,      ax:  0,       ay: -hh - 14 },
+      { dx:  0, dy: +1, arrow: '▼', egx: mw - 2,  egy: mh - 2, ax:  0,       ay:  hh + 6  },
+      { dx: +1, dy:  0, arrow: '▶', egx: mw - 2,  egy: 1,      ax:  hw + 10, ay:  0        },
+      { dx: -1, dy:  0, arrow: '◀', egx: 1,       egy: mh - 2, ax: -hw - 10, ay:  0        },
     ];
 
-    for (const { dx, dy, arrow, horiz, bord } of dirs) {
+    for (const { dx, dy, arrow, egx, egy, ax, ay } of dirs) {
       const nb = this.mapManager.getByCoords(cx + dx, cy + dy);
       if (!nb) continue;
 
-      const locked   = this.isExitLocked({ targetMap: nb.id });
-      const fillCol  = locked ? 0x991b1b : 0x0369a1;
-      const lineCol  = locked ? 0xef4444 : 0x38bdf8;
-      const label    = locked ? '🔒' : arrow;
+      const locked  = this.isExitLocked({ targetMap: nb.id });
+      const fillCol = locked ? 0x991b1b : 0x0369a1;
+      const lineCol = locked ? 0xef4444 : 0x38bdf8;
+      const label   = locked ? '🔒' : arrow;
 
-      const midPos   = horiz ? this.tileCenter(midGx, bord) : this.tileCenter(bord, midGy);
-      const { x: tx, y: ty } = midPos;
-      const g        = this.add.graphics().setDepth(ty + 1);
+      const { x: tx, y: ty } = this.tileCenter(egx, egy);
+      const g = this.add.graphics().setDepth(ty + 1);
       g.fillStyle(fillCol, 0.30);
       g.fillPoints([{x:tx,y:ty-hh},{x:tx+hw,y:ty},{x:tx,y:ty+hh},{x:tx-hw,y:ty}], true);
       g.lineStyle(2, lineCol, 0.9);
       g.strokePoints([{x:tx,y:ty-hh},{x:tx+hw,y:ty},{x:tx,y:ty+hh},{x:tx-hw,y:ty}], true);
-
       this.tweens.add({ targets: g, alpha: 0.15, yoyo: true, repeat: -1, duration: locked ? 1400 : 950 });
 
-      const ax = tx + (!horiz ? (bord === 1 ? -hw - 10 : hw + 10) : 0);
-      const ay = ty + (horiz  ? (bord === 1 ? -hh - 14 : hh + 6)  : 0);
-      const txt = this.add.text(ax, ay, label, {
+      const txt = this.add.text(tx + ax, ty + ay, label, {
         fontSize: '18px', color: locked ? '#fca5a5' : '#7dd3fc', fontStyle: 'bold',
         stroke: '#000000', strokeThickness: 3,
-      }).setOrigin(0.5).setDepth(midPos.y + 2);
+      }).setOrigin(0.5).setDepth(ty + 2);
       this.tweens.add({ targets: txt, y: txt.y - 6, yoyo: true, repeat: -1, duration: 750 });
     }
   }
