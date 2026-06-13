@@ -176,6 +176,7 @@ export class WorldScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-SPACE', () => {
       if (this.isDialogueOpen) getDialogueBox().advance();
     });
+    this.input.keyboard?.on('keydown-F9', () => this._cheatGodMode());
 
     this.scale.on('resize', () => {
       this.scene.restart({
@@ -1033,6 +1034,33 @@ export class WorldScene extends Phaser.Scene {
     const b = getBestiary();
     if (b.isOpen()) { b.close(); return; }
     b.open();
+  }
+
+  private _cheatGodMode() {
+    this.playerXP = xpForLevel(100);
+    this.gold     = 500_000;
+
+    // Toutes les quêtes validées
+    gameState.questKills              = 5;
+    gameState.questRewardGiven        = true;
+    gameState.quest2RewardGiven       = true;
+    gameState.quest3Done              = true;
+    gameState.quest3RewardGiven       = true;
+    gameState.quest4Started           = true;
+    gameState.alchimiste01Started     = true;
+    gameState.alchimiste01RewardGiven = true;
+    gameState.alchimiste02Unlocked    = true;
+
+    // Rafraîchir l'UI sans redémarrer la scène
+    if (this.uiXpGoldText?.active)
+      this.uiXpGoldText.setText(`✦ ${this.playerXP} XP  ·  💰 ${this.gold}`);
+    if (this.statsBtn?.active) {
+      const avail = availablePoints(this.playerXP, this.playerStats);
+      this.statsBtn.setText(`Nv.100  📋${avail > 0 ? ` ✨${avail}` : ''}`);
+      this.statsBtn.setColor('#4ade80');
+    }
+    gameState.currentLevel = 99;
+    this._checkLevelUp();
   }
 
 
