@@ -411,6 +411,13 @@
       "targetMap": "map_foret",
       "targetX": 2,
       "targetY": 8
+    },
+    {
+      "x": 21,
+      "y": 7,
+      "targetMap": "map_foret",
+      "targetX": 2,
+      "targetY": 7
     }
   ],
   "spawns": [],
