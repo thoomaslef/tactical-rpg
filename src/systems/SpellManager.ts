@@ -25,15 +25,13 @@ export class SpellManager {
   computeDamage(spell: ISpell, stats: PlayerStats, finalDmgPct = 0, extraTerreBonus = 0): number {
     if (!spell.baseDamage) return 0;
     const { min, max } = spell.baseDamage;
-    const raw = min + Math.floor(Math.random() * (max - min + 1));
-    const elemBonus = this.elementBonus(spell, stats, extraTerreBonus);
-    const base = Math.max(1, raw + elemBonus);
-    return Math.max(1, Math.round(base * (1 + finalDmgPct / 100)));
+    const raw = Math.max(1, min + Math.floor(Math.random() * (max - min + 1)));
+    const elemPct = this.elementBonus(spell, stats, extraTerreBonus);
+    return Math.max(1, Math.round(raw * (1 + (finalDmgPct + elemPct) / 100)));
   }
 
-  /** Retourne le bonus de stats applicable à l'élément du sort. */
+  /** Retourne le bonus % de dégâts lié à l'élément du sort (1% par tranche de 3 points investis). */
   elementBonus(spell: ISpell, stats: PlayerStats, extraTerreBonus = 0): number {
-    // Sort multi-éléments : somme des bonus de chaque élément
     if (spell.elements && spell.elements.length > 0) {
       return spell.elements.reduce((sum, el) => sum + this._bonusForElement(el, stats, extraTerreBonus), 0);
     }
@@ -42,14 +40,14 @@ export class SpellManager {
 
   private _bonusForElement(element: string | undefined, stats: PlayerStats, extraTerreBonus = 0): number {
     switch (element) {
-      case 'feu':     return stats.feu;
-      case 'air':     return stats.air;
-      case 'eau':     return stats.eau;
-      case 'terre':   return stats.terre + extraTerreBonus;
-      case 'psy':     return stats.psy;
-      case 'glace':   return stats.glace;
-      case 'electrik': return stats.electrik;
-      default:        return 0;
+      case 'feu':      return Math.floor(stats.feu / 3);
+      case 'air':      return Math.floor(stats.air / 3);
+      case 'eau':      return Math.floor(stats.eau / 3);
+      case 'terre':    return Math.floor((stats.terre + extraTerreBonus) / 3);
+      case 'psy':      return Math.floor(stats.psy / 3);
+      case 'glace':    return Math.floor(stats.glace / 3);
+      case 'electrik': return Math.floor(stats.electrik / 3);
+      default:         return 0;
     }
   }
 
