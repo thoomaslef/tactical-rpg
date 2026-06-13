@@ -1487,6 +1487,135 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
 
+    // ── Cas spécial : Alchimiste des Vestiges ────────────────────────────────
+    if (npc.id === 'alchimiste') {
+      const gs = gameState;
+
+      const openDlg = (lines: string[]) => {
+        this.isDialogueOpen = true;
+        getDialogueBox().open(npc.name, lines, () => { this.isDialogueOpen = false; });
+      };
+
+      // Première rencontre → pitch + lancement quête
+      if (!gs.npcInteracted.has('alchimiste')) {
+        gs.npcInteracted.add('alchimiste');
+        gs.alchimiste01Started = true;
+        openDlg(npc.firstDialogues ?? ['…']);
+        return;
+      }
+
+      // Quête déjà récompensée
+      if (gs.alchimiste01RewardGiven) {
+        openDlg([
+          '"Étrange... Le réceptacle ne s\'est pas entièrement vidé. Quelque chose est resté au fond..."',
+          'Je dois analyser ça. Reviens me voir bientôt.',
+        ]);
+        return;
+      }
+
+      // Vérifier si le joueur a toutes les essences
+      const hasSpore   = this.inventory.some(e => e.id === 'spore_luminescente'  && e.qty > 0);
+      const hasDefense = this.inventory.some(e => e.id === 'defense_fracassee'   && e.qty > 0);
+      const hasLarme   = this.inventory.some(e => e.id === 'larme_spectrale'     && e.qty > 0);
+      const hasAnneau  = this.inventory.some(e => e.id === 'anneau_fer_tordu'    && e.qty > 0);
+      const allFound   = hasSpore && hasDefense && hasLarme && hasAnneau;
+
+      if (allFound) {
+        openDlg([
+          'Tu les as toutes ! Je sens les fluides sauvages vibrer dans tes mains.',
+          'Rends-toi maintenant devant le Réceptacle de Fluide Ancien, juste à côté.',
+          'Dépose-y les quatre essences. La lame se forgera d\'elle-même.',
+        ]);
+        return;
+      }
+
+      // En cours — rapport de progression
+      const missing: string[] = [];
+      if (!hasSpore)   missing.push('Spore Luminescente (Sporrin)');
+      if (!hasDefense) missing.push('Défense Fracassée (Défoncier)');
+      if (!hasLarme)   missing.push('Larme Spectrale (Rumineuse)');
+      if (!hasAnneau)  missing.push('Anneau de Fer Tordu (Groinard)');
+      openDlg([
+        `Il te manque encore : ${missing.join(', ')}.`,
+        'Continue ta chasse. Ces créatures rôdent dans les environs.',
+      ]);
+      return;
+    }
+
+    // ── Cas spécial : Réceptacle de Fluide Ancien ────────────────────────────
+    if (npc.id === 'receptacle_fluide') {
+      const gs = gameState;
+
+      const openDlg = (lines: string[]) => {
+        this.isDialogueOpen = true;
+        getDialogueBox().open(npc.name, lines, () => { this.isDialogueOpen = false; });
+      };
+
+      // Quête pas encore commencée
+      if (!gs.alchimiste01Started) {
+        openDlg(['Le réceptacle vibre faiblement. Quatre emplacements semblent attendre des catalyseurs.']);
+        return;
+      }
+
+      // Déjà complété
+      if (gs.alchimiste01RewardGiven) {
+        openDlg(['Le réceptacle est vide... presque. Un résidu de fluide sauvage semble persister au fond.']);
+        return;
+      }
+
+      // Vérifier essences
+      const hasSpore   = this.inventory.some(e => e.id === 'spore_luminescente'  && e.qty > 0);
+      const hasDefense = this.inventory.some(e => e.id === 'defense_fracassee'   && e.qty > 0);
+      const hasLarme   = this.inventory.some(e => e.id === 'larme_spectrale'     && e.qty > 0);
+      const hasAnneau  = this.inventory.some(e => e.id === 'anneau_fer_tordu'    && e.qty > 0);
+
+      if (!hasSpore || !hasDefense || !hasLarme || !hasAnneau) {
+        const missing: string[] = [];
+        if (!hasSpore)   missing.push('Spore Luminescente');
+        if (!hasDefense) missing.push('Défense Fracassée');
+        if (!hasLarme)   missing.push('Larme Spectrale');
+        if (!hasAnneau)  missing.push('Anneau de Fer Tordu');
+        openDlg([
+          'Le réceptacle vibre faiblement. Quatre emplacements semblent attendre des catalyseurs.',
+          `Il manque encore : ${missing.join(', ')}.`,
+        ]);
+        return;
+      }
+
+      // ── Toutes les essences présentes → forger la lame ──
+      gs.alchimiste01RewardGiven = true;
+      gs.alchimiste02Unlocked = true;
+
+      // Retirer les essences de l'inventaire
+      for (const id of ['spore_luminescente', 'defense_fracassee', 'larme_spectrale', 'anneau_fer_tordu']) {
+        const entry = this.inventory.find(e => e.id === id);
+        if (entry) entry.qty = Math.max(0, entry.qty - 1);
+      }
+      this.inventory = this.inventory.filter(e => e.qty > 0);
+
+      // Donner l'épée + XP + gold
+      const existing = this.inventory.find(e => e.id === 'epee_premier_eveil');
+      if (existing) existing.qty++;
+      else this.inventory.push({ id: 'epee_premier_eveil', qty: 1 });
+
+      this.playerXP += 3500;
+      this.gold     += 500;
+      if (this.uiXpGoldText?.active) {
+        this.uiXpGoldText.setText(`✦ ${this.playerXP} XP  ·  💰 ${this.gold}`);
+      }
+      this._checkLevelUp();
+
+      openDlg([
+        'Le Fluide Sauvage fusionne alors au centre du réceptacle...',
+        'Une lame surgit des profondeurs de l\'artefact, brillant d\'une lumière ancienne.',
+        '⚔️ Vous obtenez l\'Épée du Premier Éveil !',
+        '+3 500 XP · +500 pièces d\'or',
+        '"Étrange... Le réceptacle ne s\'est pas entièrement vidé. Quelque chose est resté au fond..."',
+        'Retourne voir l\'Alchimiste. Une nouvelle quête t\'attend.',
+      ]);
+      return;
+    }
+
     const alreadyMet = gameState.npcInteracted.has(npc.id);
     let lines: string[];
 

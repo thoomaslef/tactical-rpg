@@ -10,6 +10,7 @@ export interface ItemBonuses {
   meleeDamage?: number;
   terre?: number;
   feu?: number;
+  procEveilMineur?: number; // 0.0–1.0 : chance de déclencher Éveil Mineur (×2 dégâts, 2 tours)
 }
 
 export interface EquipBonuses {
@@ -114,6 +115,11 @@ export const ITEMS: Record<string, Item> = {
     id: 'casque_foret', name: 'Casque de la Forêt', icon: '🌲', slot: 'helmet',
     weight: 6, bonuses: { terre: 10, feu: 10, resistance: 3 },
     description: '+10% dégâts Terre · +10% dégâts Feu · +3 Résistances',
+  },
+  epee_premier_eveil: {
+    id: 'epee_premier_eveil', name: "Épée du Premier Éveil", icon: '🗡️', slot: 'weapon',
+    weight: 20, bonuses: { meleeDamage: 50, hp: 25, procEveilMineur: 0.05 },
+    description: '+50 Attaque · +25 Vitalité · 5% : Éveil Mineur (×2 dégâts pendant 2 tours)',
   },
 };
 
@@ -252,6 +258,11 @@ export const RESOURCE_CATALOG: Record<string, ResourceItem> = {
   defense_defoncier:    { id: 'defense_defoncier',     name: 'Défense de Défoncier',          icon: '🐗' },
   // Consommables spéciaux
   xp_scroll_max:        { id: 'xp_scroll_max',         name: 'Élixir du Maître',            icon: '⭐' },
+  // Essences — quête Alchimiste des Vestiges
+  spore_luminescente:   { id: 'spore_luminescente',    name: 'Spore Luminescente',           icon: '✨' },
+  defense_fracassee:    { id: 'defense_fracassee',     name: 'Défense Fracassée',            icon: '🦴' },
+  larme_spectrale:      { id: 'larme_spectrale',       name: 'Larme Spectrale',              icon: '💧' },
+  anneau_fer_tordu:     { id: 'anneau_fer_tordu',      name: 'Anneau de Fer Tordu',          icon: '🔩' },
 };
 
 export function currentWeight(equip: PlayerEquipment, inv: InventoryEntry[]): number {

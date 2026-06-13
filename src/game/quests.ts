@@ -67,6 +67,31 @@ export const QUESTS: Quest[] = [
       { id: 'find_hunter', description: 'Retrouver le Chasseur Roan dans la Clairière', current: 0, target: 1 },
     ],
   },
+  {
+    id: 'alchimiste_01',
+    title: 'Alchimiste des Vestiges',
+    description:
+      "L'Alchimiste a retrouvé un ancien réceptacle capable de forger une lame oubliée. Il lui manque quatre essences récoltées sur des créatures mutées.",
+    icon: '⚗️',
+    status: 'locked',
+    objectives: [
+      { id: 'collect_spore',    description: 'Rapporter une Spore Luminescente (Sporrin)',    current: 0, target: 1 },
+      { id: 'collect_defense',  description: 'Rapporter une Défense Fracassée (Défoncier)',   current: 0, target: 1 },
+      { id: 'collect_larme',    description: 'Rapporter une Larme Spectrale (Rumineuse)',     current: 0, target: 1 },
+      { id: 'collect_anneau',   description: 'Rapporter un Anneau de Fer Tordu (Groinard)',   current: 0, target: 1 },
+      { id: 'use_receptacle',   description: 'Déposer les essences dans le Réceptacle',       current: 0, target: 1 },
+    ],
+    rewards: { xp: 3500, gold: 500, item: 'epee_premier_eveil', itemName: "Épée du Premier Éveil" },
+  },
+  {
+    id: 'alchimiste_02',
+    title: 'Les Vestiges de l\'Éveil Sauvage',
+    description:
+      '"Étrange... Le réceptacle ne s\'est pas entièrement vidé. Quelque chose est resté au fond..."',
+    icon: '🌀',
+    status: 'locked',
+    objectives: [],
+  },
 ];
 
 /** Compte les quêtes complétées. */

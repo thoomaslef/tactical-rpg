@@ -399,7 +399,156 @@ function makeColorTile(color, label) {
   return { name: `__color_${color}`, label, color, img, src, previewSrc: src, isColor: true };
 }
 
-let numColorTiles = 0; // nombre de dalles couleur en tête de tiles[]
+let numColorTiles = 0;
+
+// ══════════════════════════════════════════════════════════════
+//  SPRITES DE DÉCORATION INTÉGRÉS
+// ══════════════════════════════════════════════════════════════
+function _sprite(drawFn, name) {
+  const W = 128, H = 128;
+  const off = document.createElement('canvas');
+  off.width = W; off.height = H;
+  const oc = off.getContext('2d');
+  drawFn(oc, W, H);
+  const src = off.toDataURL('image/png');
+  const img = new Image(); img.src = src;
+  return { name: `__builtin_${name}`, label: name, img, src, previewSrc: src, isBuiltin: true };
+}
+
+function _drawTree(ctx, W, H) {
+  const bx=W/2, by=H*.86;
+  ctx.fillStyle='rgba(0,0,0,.18)'; ctx.beginPath(); ctx.ellipse(bx,by,22,7,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#5c3318'; ctx.fillRect(bx-5,by-26,10,26);
+  [[36,by-52],[27,by-74],[17,by-92]].forEach(([r,ty],i)=>{
+    ctx.fillStyle=['#2a5c1a','#337722','#44992e'][i];
+    ctx.beginPath(); ctx.moveTo(bx,ty-r); ctx.lineTo(bx+r,ty+r*.6); ctx.lineTo(bx-r,ty+r*.6); ctx.closePath(); ctx.fill();
+  });
+}
+
+function _drawBush(ctx, W, H) {
+  const bx=W/2, by=H*.82;
+  ctx.fillStyle='rgba(0,0,0,.15)'; ctx.beginPath(); ctx.ellipse(bx,by,28,8,0,0,Math.PI*2); ctx.fill();
+  [[bx,by-18,20],[bx-16,by-12,16],[bx+16,by-12,16],[bx-8,by-30,14],[bx+8,by-30,14]].forEach(([x,y,r])=>{
+    ctx.fillStyle='#2d6b22'; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+  });
+  ctx.fillStyle='#4a9938'; ctx.beginPath(); ctx.arc(bx-4,by-32,10,0,Math.PI*2); ctx.fill();
+}
+
+function _drawHouse(ctx, W, H) {
+  const bx=W/2, by=H*.88;
+  // Mur gauche
+  ctx.fillStyle='#b8936a';
+  ctx.beginPath(); ctx.moveTo(bx,by-8); ctx.lineTo(bx-38,by-26); ctx.lineTo(bx-38,by-56); ctx.lineTo(bx,by-38); ctx.closePath(); ctx.fill();
+  // Mur droit
+  ctx.fillStyle='#d4aa80';
+  ctx.beginPath(); ctx.moveTo(bx,by-8); ctx.lineTo(bx+38,by-26); ctx.lineTo(bx+38,by-56); ctx.lineTo(bx,by-38); ctx.closePath(); ctx.fill();
+  // Toit gauche
+  ctx.fillStyle='#8b3a2a';
+  ctx.beginPath(); ctx.moveTo(bx,by-38); ctx.lineTo(bx-38,by-56); ctx.lineTo(bx-22,by-72); ctx.lineTo(bx,by-58); ctx.closePath(); ctx.fill();
+  // Toit droit
+  ctx.fillStyle='#a04535';
+  ctx.beginPath(); ctx.moveTo(bx,by-38); ctx.lineTo(bx+38,by-56); ctx.lineTo(bx+22,by-72); ctx.lineTo(bx,by-58); ctx.closePath(); ctx.fill();
+  // Faîte
+  ctx.fillStyle='#6a2a1a';
+  ctx.beginPath(); ctx.moveTo(bx,by-58); ctx.lineTo(bx-22,by-72); ctx.lineTo(bx+22,by-72); ctx.closePath(); ctx.fill();
+  // Porte
+  ctx.fillStyle='#5a3318'; ctx.fillRect(bx+8,by-40,14,30);
+  // Fenêtre
+  ctx.fillStyle='#a8d4f0'; ctx.fillRect(bx-30,by-48,14,12);
+  ctx.strokeStyle='#5a3318'; ctx.lineWidth=1.5; ctx.strokeRect(bx-30,by-48,14,12);
+}
+
+function _drawWell(ctx, W, H) {
+  const bx=W/2, by=H*.86;
+  ctx.fillStyle='rgba(0,0,0,.15)'; ctx.beginPath(); ctx.ellipse(bx,by,22,7,0,0,Math.PI*2); ctx.fill();
+  // Corps pierre
+  ctx.fillStyle='#6a6a7a'; ctx.fillRect(bx-22,by-30,44,26);
+  ctx.fillStyle='#888899'; ctx.beginPath(); ctx.ellipse(bx,by-30,22,9,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#888899'; ctx.beginPath(); ctx.ellipse(bx,by-4,22,9,0,0,Math.PI*2); ctx.fill();
+  // Poteaux
+  ctx.fillStyle='#5c3318'; ctx.fillRect(bx-18,by-64,7,34); ctx.fillRect(bx+11,by-64,7,34);
+  // Traverse
+  ctx.fillRect(bx-18,by-64,36,7);
+  // Corde + seau
+  ctx.strokeStyle='#8b6040'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(bx,by-57); ctx.lineTo(bx,by-38); ctx.stroke();
+  ctx.fillStyle='#a0742c'; ctx.fillRect(bx-5,by-38,10,9);
+}
+
+function _drawBarrel(ctx, W, H) {
+  const bx=W/2, by=H*.86;
+  ctx.fillStyle='rgba(0,0,0,.15)'; ctx.beginPath(); ctx.ellipse(bx,by,18,6,0,0,Math.PI*2); ctx.fill();
+  const g=ctx.createLinearGradient(bx-16,0,bx+16,0);
+  g.addColorStop(0,'#6b3a1a'); g.addColorStop(.4,'#8b5230'); g.addColorStop(1,'#5a2a10');
+  ctx.fillStyle=g;
+  ctx.beginPath(); ctx.ellipse(bx,by-44,18,6,0,0,Math.PI*2); ctx.fill();
+  ctx.fillRect(bx-18,by-44,36,40);
+  ctx.beginPath(); ctx.ellipse(bx,by-4,18,6,0,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#3a1a08'; ctx.lineWidth=3;
+  [by-14,by-24,by-34].forEach(y=>{ ctx.beginPath(); ctx.ellipse(bx,y,18,6,0,0,Math.PI*2); ctx.stroke(); });
+  ctx.fillStyle='#7b4a22'; ctx.beginPath(); ctx.ellipse(bx,by-44,18,6,0,0,Math.PI*2); ctx.fill();
+}
+
+function _drawCampfire(ctx, W, H) {
+  const bx=W/2, by=H*.86;
+  ctx.fillStyle='rgba(0,0,0,.15)'; ctx.beginPath(); ctx.ellipse(bx,by,20,7,0,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#5c3318'; ctx.lineWidth=6; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(bx-18,by); ctx.lineTo(bx+8,by-18); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(bx+18,by); ctx.lineTo(bx-8,by-18); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(bx-10,by+2); ctx.lineTo(bx+10,by+2); ctx.stroke();
+  [[bx,by-40,'#ff4400',10],[bx-6,by-30,'#ff8800',7],[bx+6,by-32,'#ff6600',8],[bx,by-24,'#ffcc00',6]].forEach(([fx,fy,col,r])=>{
+    ctx.fillStyle=col;
+    ctx.beginPath(); ctx.moveTo(fx-r,fy+r*2); ctx.quadraticCurveTo(fx-r*1.2,fy,fx,fy-r*2); ctx.quadraticCurveTo(fx+r*1.2,fy,fx+r,fy+r*2); ctx.closePath(); ctx.fill();
+  });
+}
+
+function _drawChest(ctx, W, H) {
+  const bx=W/2, by=H*.86;
+  ctx.fillStyle='rgba(0,0,0,.15)'; ctx.beginPath(); ctx.ellipse(bx,by,24,7,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#7b4a1a'; ctx.fillRect(bx-22,by-30,44,28);
+  ctx.fillStyle='#5a3310';
+  ctx.beginPath(); ctx.moveTo(bx-22,by-30); ctx.lineTo(bx-32,by-22); ctx.lineTo(bx-32,by-2); ctx.lineTo(bx-22,by-2); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#9b6228'; ctx.fillRect(bx-22,by-38,44,10);
+  ctx.fillStyle='#7a4a18';
+  ctx.beginPath(); ctx.moveTo(bx-22,by-38); ctx.lineTo(bx-32,by-30); ctx.lineTo(bx-32,by-22); ctx.lineTo(bx-22,by-30); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#c8a030'; ctx.lineWidth=2.5;
+  ctx.strokeRect(bx-22,by-38,44,38);
+  ctx.beginPath(); ctx.moveTo(bx,by-38); ctx.lineTo(bx,by+2); ctx.stroke();
+  ctx.fillStyle='#c8a030'; ctx.beginPath(); ctx.arc(bx,by-22,5,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#8b6820'; ctx.beginPath(); ctx.arc(bx,by-22,3,0,Math.PI*2); ctx.fill();
+}
+
+function _drawMushroom(ctx, W, H) {
+  const bx=W/2, by=H*.86;
+  ctx.fillStyle='rgba(0,0,0,.15)'; ctx.beginPath(); ctx.ellipse(bx,by,16,5,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#e8dcc8';
+  ctx.beginPath(); ctx.moveTo(bx-8,by); ctx.lineTo(bx+8,by); ctx.lineTo(bx+6,by-30); ctx.lineTo(bx-6,by-30); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#f0e8d8'; ctx.beginPath(); ctx.ellipse(bx,by-30,26,9,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#c0301a';
+  ctx.beginPath(); ctx.arc(bx,by-48,26,0,Math.PI,true); ctx.lineTo(bx-26,by-30); ctx.lineTo(bx+26,by-30); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.75)';
+  [[bx-10,by-52,5],[bx+10,by-50,4],[bx,by-42,4],[bx-18,by-44,3]].forEach(([x,y,r])=>{
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+  });
+}
+
+const BUILTIN_DECOS_DEF = [
+  ['Arbre',      _drawTree],
+  ['Buisson',    _drawBush],
+  ['Maison',     _drawHouse],
+  ['Puits',      _drawWell],
+  ['Tonneau',    _drawBarrel],
+  ['Feu de camp',_drawCampfire],
+  ['Coffre',     _drawChest],
+  ['Champignon', _drawMushroom],
+];
+
+let numBuiltinDecos = 0;
+
+function initBuiltinDecos() {
+  BUILTIN_DECOS_DEF.forEach(([name, fn]) => decos.push(_sprite(fn, name)));
+  numBuiltinDecos = BUILTIN_DECOS_DEF.length;
+}
 
 function initColorTiles() {
   COLOR_TILES.forEach(({ label, color }) => {
@@ -591,6 +740,7 @@ function refreshPalette() {
 
   pList.style.display = 'flex';
   pExit.style.display = 'none';
+  pList.innerHTML = '';
 
   if (mode === 'tiles') {
     // ── Section dalles de couleur ──
@@ -668,19 +818,24 @@ function refreshPalette() {
 
     count.textContent = `${tiles.filter(t=>!t.isColor).length} image(s) · ${tiles.filter(t=>t.isColor).length} couleur(s)`;
   } else {
-    // ── Mode décos (inchangé) ──
-    const items = decos;
-    count.textContent = `${items.length} élément${items.length !== 1 ? 's' : ''}`;
-    items.forEach((t, i) => {
+    // ── Mode décos ──
+    const userDecos = decos.filter(t => !t.isBuiltin);
+    count.textContent = `${numBuiltinDecos} intégrés · ${userDecos.length} chargé${userDecos.length !== 1 ? 's' : ''}`;
+
+    // Section sprites intégrés
+    const secB = document.createElement('div');
+    secB.className = 'palette-section-title'; secB.textContent = '🧱 Sprites intégrés';
+    pList.appendChild(secB);
+
+    decos.forEach((t, i) => {
+      if (!t.isBuiltin) return;
       const item = document.createElement('div');
       item.className = 'palette-item' + (selectedIdx === i ? ' active' : '');
       const img = document.createElement('img');
       img.className = 'palette-thumb'; img.src = t.previewSrc || t.src;
       const info = document.createElement('div'); info.style.minWidth = 0;
       const lbl = document.createElement('div'); lbl.className = 'palette-label';
-      let name = t.name.replace(/\.[^.]+$/, '');
-      if (name.length > 22) name = name.slice(0, 20) + '…';
-      lbl.textContent = name; info.appendChild(lbl);
+      lbl.textContent = t.label || t.name; info.appendChild(lbl);
       item.append(img, info);
       item.addEventListener('click', () => {
         selectedIdx = i; eraserMode = false;
@@ -689,6 +844,34 @@ function refreshPalette() {
       });
       pList.appendChild(item);
     });
+
+    // Section sprites chargés depuis fichiers
+    if (userDecos.length > 0) {
+      const sep = document.createElement('div'); sep.className = 'palette-sep'; pList.appendChild(sep);
+      const secU = document.createElement('div');
+      secU.className = 'palette-section-title'; secU.textContent = '🖼️ Sprites chargés';
+      pList.appendChild(secU);
+
+      decos.forEach((t, i) => {
+        if (t.isBuiltin) return;
+        const item = document.createElement('div');
+        item.className = 'palette-item' + (selectedIdx === i ? ' active' : '');
+        const img = document.createElement('img');
+        img.className = 'palette-thumb'; img.src = t.previewSrc || t.src;
+        const info = document.createElement('div'); info.style.minWidth = 0;
+        const lbl = document.createElement('div'); lbl.className = 'palette-label';
+        let name = t.name.replace(/\.[^.]+$/, '');
+        if (name.length > 22) name = name.slice(0, 20) + '…';
+        lbl.textContent = name; info.appendChild(lbl);
+        item.append(img, info);
+        item.addEventListener('click', () => {
+          selectedIdx = i; eraserMode = false;
+          document.getElementById('btn-eraser').classList.remove('active');
+          refreshPalette();
+        });
+        pList.appendChild(item);
+      });
+    }
   }
 
   document.getElementById('rot-group').style.opacity = mode === 'decos' ? '1' : '0.35';
@@ -1163,7 +1346,8 @@ function importMap(data) {
   tiles = []; decos = []; selectedIdx = -1;
   importedTileManifest = {};
   importedDecoSprites  = {};
-  initColorTiles();  // remet les dalles couleur en premier
+  initColorTiles();
+  initBuiltinDecos();
   initGrids();
   resizeCanvas();
 
@@ -1192,11 +1376,20 @@ function importMap(data) {
     }
   }
 
-  // ── Décorations (placeholders) ──
+  // ── Décorations ──
   if (data.decorations) {
     for (const d of data.decorations) {
       if (!inBounds(d.x, d.y)) continue;
       const spriteName = d.sprite || '';
+      // Builtins : restaurés directement sans chargement fichier
+      if (spriteName.startsWith('__builtin_')) {
+        const label = spriteName.replace('__builtin_', '');
+        const builtinIdx = decos.findIndex(b => b.isBuiltin && b.label === label);
+        if (builtinIdx >= 0) {
+          decoGrid[d.y][d.x] = { idx: builtinIdx, rot: d.rotation ?? 0 };
+          continue;
+        }
+      }
       // idx=-1 = placeholder (image pas encore chargée)
       decoGrid[d.y][d.x] = { idx: -1, rot: d.rotation ?? 0, spriteName };
       if (!importedDecoSprites[spriteName]) importedDecoSprites[spriteName] = [];
@@ -1329,6 +1522,7 @@ function tryMatchDecosAfterLoad() {
 //  INIT
 // ═══════════════════════════════════════════════
 initColorTiles();
+initBuiltinDecos();
 initGrids();
 resizeCanvas();
 render();

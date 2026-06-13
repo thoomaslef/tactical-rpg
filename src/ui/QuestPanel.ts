@@ -189,6 +189,22 @@ export class QuestPanel {
       return { ...quest, status: 'in_progress' };
     }
 
+    if (quest.id === 'alchimiste_01') {
+      if (!gs.alchimiste01Started) return { ...quest, status: 'locked' };
+      if (gs.alchimiste01RewardGiven) return {
+        ...quest, status: 'completed',
+        objectives: quest.objectives.map(o => ({ ...o, current: o.target })),
+      };
+      // Hydrater chaque objectif depuis l'inventaire courant — pas accessible ici,
+      // on garde current=0/1 symbolique via gameState
+      return { ...quest, status: 'in_progress' };
+    }
+
+    if (quest.id === 'alchimiste_02') {
+      if (!gs.alchimiste02Unlocked) return { ...quest, status: 'locked' };
+      return { ...quest, status: 'available' };
+    }
+
     return quest;
   }
 

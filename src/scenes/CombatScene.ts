@@ -59,6 +59,7 @@ export class CombatScene extends Phaser.Scene {
   private playerXP = 0;
   private damageDealt = 0;
   private turnsUsed = 0;
+  private eveilMineurTurns = 0;
   private mapId = 'map_c';
   private returnX = 6;
   private returnY = 4;
@@ -439,6 +440,11 @@ export class CombatScene extends Phaser.Scene {
       for (const [id, remaining] of this.spellCooldowns) {
         if (remaining <= 1) this.spellCooldowns.delete(id);
         else this.spellCooldowns.set(id, remaining - 1);
+      }
+      // Décrémente Éveil Mineur
+      if (this.eveilMineurTurns > 0) {
+        this.eveilMineurTurns--;
+        if (this.eveilMineurTurns === 0) this.hud.log('Éveil Mineur dissipé.', 'sys');
       }
     }
 
@@ -987,12 +993,13 @@ export class CombatScene extends Phaser.Scene {
       }
     };
 
-    // Calcul des dégâts : bonus élémentaires + bonus niveau
+    // Calcul des dégâts : bonus élémentaires + bonus niveau + Éveil Mineur
     const _finalDmgPct = finalDamagePercent(getLevel(this.playerXP));
     const _eb = getEquipBonuses(this.playerEquipment);
     const _statsWithEquip = { ...this.playerStats, terre: this.playerStats.terre + _eb.terre, feu: this.playerStats.feu + _eb.feu };
+    const _eveilMult = (caster.team === 'player' && this.eveilMineurTurns > 0) ? 2 : 1;
     const rawDamage = caster.team === 'player'
-      ? this.spellManager.computeDamage(spell, _statsWithEquip, _finalDmgPct, 0)
+      ? Math.round(this.spellManager.computeDamage(spell, _statsWithEquip, _finalDmgPct, 0) * _eveilMult)
       : (spell.baseDamage ? spell.baseDamage.min + Math.floor(Math.random() * (spell.baseDamage.max - spell.baseDamage.min + 1)) : 0);
 
     /** Applique le recul orthogonal à une cible depuis la direction caster→cible */
@@ -1100,6 +1107,23 @@ export class CombatScene extends Phaser.Scene {
               stroke: '#000', strokeThickness: 3,
             }).setOrigin(0.5).setDepth(9000);
           this.tweens.add({ targets: t, y: t.y - 28, alpha: 0, duration: 900, onComplete: () => t.destroy() });
+        }
+      }
+    }
+
+    // ── Proc Éveil Mineur (Épée du Premier Éveil) ────────────────────────────
+    if (caster.team === 'player' && spell.baseDamage) {
+      const procChance = ITEMS[this.playerEquipment.weapon ?? '']?.bonuses.procEveilMineur ?? 0;
+      if (procChance > 0 && Math.random() < procChance) {
+        this.eveilMineurTurns = 2;
+        this.hud.log('✨ Éveil Mineur ! ×2 dégâts pendant 2 tours !', 'sys');
+        const player = this.playerUnit();
+        if (player.sprite) {
+          const t = this.add.text(player.sprite.x, player.sprite.y - 56, '✨ ÉVEIL MINEUR', {
+            fontSize: '15px', color: '#facc15', fontStyle: 'bold',
+            stroke: '#000', strokeThickness: 3,
+          }).setOrigin(0.5).setDepth(9000);
+          this.tweens.add({ targets: t, y: t.y - 32, alpha: 0, duration: 1400, ease: 'Quad.easeOut', onComplete: () => t.destroy() });
         }
       }
     }

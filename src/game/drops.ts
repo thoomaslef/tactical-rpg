@@ -31,16 +31,18 @@ export const MONSTER_DROPS: MonsterDef[] = [
     name: 'Rumineuse',
     icon: '🐄',
     drops: [
-      { itemId: 'cuir_rumineuse', chance: 0.30 },
-      { itemId: 'anneau_foret',   chance: 0.20 },
+      { itemId: 'cuir_rumineuse',   chance: 0.30 },
+      { itemId: 'anneau_foret',     chance: 0.20 },
+      { itemId: 'larme_spectrale',  chance: 0.15 },
     ],
   },
   {
     name: 'Sporrin',
     icon: '🍄',
     drops: [
-      { itemId: 'psylo',          chance: 0.30 },
-      { itemId: 'amulette_foret', chance: 0.20 },
+      { itemId: 'psylo',               chance: 0.30 },
+      { itemId: 'amulette_foret',      chance: 0.20 },
+      { itemId: 'spore_luminescente',  chance: 0.15 },
     ],
   },
   {
@@ -49,13 +51,15 @@ export const MONSTER_DROPS: MonsterDef[] = [
     drops: [
       { itemId: 'defense_defoncier', chance: 0.30 },
       { itemId: 'casque_foret',      chance: 0.20 },
+      { itemId: 'defense_fracassee', chance: 0.15 },
     ],
   },
   {
     name: 'Groinard',
     icon: '🦌',
     drops: [
-      { itemId: 'anneau_foret', chance: 0.20 },
+      { itemId: 'anneau_foret',     chance: 0.20 },
+      { itemId: 'anneau_fer_tordu', chance: 0.15 },
     ],
   },
   {

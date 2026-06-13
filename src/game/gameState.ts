@@ -21,6 +21,12 @@ export const gameState = {
   quest3RewardGiven: false,
   /** True si le Professeur a envoyé le joueur vers le Chasseur (quête 4 démarrée) */
   quest4Started: false,
+  /** True si l'Alchimiste a accepté la quête des essences */
+  alchimiste01Started: false,
+  /** True si la récompense de la quête Alchimiste (lame forgée) a été donnée */
+  alchimiste01RewardGiven: false,
+  /** True si la quête de suivi (Vestiges) a été débloquée */
+  alchimiste02Unlocked: false,
   /** Inventaire de la banque — persiste entre les maps */
   bankInventory: [] as InventoryEntry[],
   /** Niveau actuel du joueur — pour détecter les montées de niveau */
