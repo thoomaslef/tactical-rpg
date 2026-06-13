@@ -1002,6 +1002,15 @@ export class CombatScene extends Phaser.Scene {
       ? Math.round(this.spellManager.computeDamage(spell, _statsWithEquip, _finalDmgPct, 0) * _eveilMult)
       : (spell.baseDamage ? spell.baseDamage.min + Math.floor(Math.random() * (spell.baseDamage.max - spell.baseDamage.min + 1)) : 0);
 
+    if (caster.team === 'player' && spell.baseDamage) {
+      const _elemFlat = this.spellManager.elementBonus(spell, _statsWithEquip);
+      if (_elemFlat > 0) {
+        const _el = spell.elements?.[0] ?? spell.element ?? '';
+        const _icon: Record<string, string> = { terre:'🌿',feu:'🔥',eau:'💧',air:'🌬️',glace:'❄️',psy:'🧠',electrik:'⚡' };
+        this.hud.log(`${_icon[_el] ?? '✨'} +${_elemFlat} ${_el} (stat élémentaire)`, 'sys');
+      }
+    }
+
     /** Applique le recul orthogonal à une cible depuis la direction caster→cible */
     const applyPush = (victim: Unit, ddx: number, ddy: number) => {
       let nx = victim.pos.x, ny = victim.pos.y;

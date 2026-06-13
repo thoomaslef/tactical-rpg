@@ -26,11 +26,11 @@ export class SpellManager {
     if (!spell.baseDamage) return 0;
     const { min, max } = spell.baseDamage;
     const raw = Math.max(1, min + Math.floor(Math.random() * (max - min + 1)));
-    const elemPct = this.elementBonus(spell, stats, extraTerreBonus);
-    return Math.max(1, Math.round(raw * (1 + (finalDmgPct + elemPct) / 100)));
+    const elemFlat = this.elementBonus(spell, stats, extraTerreBonus);
+    return Math.max(1, Math.round((raw + elemFlat) * (1 + finalDmgPct / 100)));
   }
 
-  /** Retourne le bonus % de dégâts lié à l'élément du sort (1% par tranche de 3 points investis). */
+  /** Retourne le bonus de dégâts plats lié à l'élément du sort (1 point par tranche de 3 points investis). */
   elementBonus(spell: ISpell, stats: PlayerStats, extraTerreBonus = 0): number {
     if (spell.elements && spell.elements.length > 0) {
       return spell.elements.reduce((sum, el) => sum + this._bonusForElement(el, stats, extraTerreBonus), 0);
