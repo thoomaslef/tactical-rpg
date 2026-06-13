@@ -399,19 +399,15 @@
   ],
   "exits": [
     {
-      "from": {
-        "x": 11,
-        "y": 1
-      },
+      "x": 11,
+      "y": 1,
       "targetMap": "map_foret_no",
       "targetX": 11,
       "targetY": 13
     },
     {
-      "from": {
-        "x": 20,
-        "y": 8
-      },
+      "x": 20,
+      "y": 8,
       "targetMap": "map_foret",
       "targetX": 2,
       "targetY": 8
