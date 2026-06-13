@@ -1,0 +1,80 @@
+🎨 BASE UNIVERSELLE — À ne jamais modifier
+isometric 2:1 game asset, flat vector illustration, 
+cartoon low-poly, warm soft colors, clean shapes, 
+subtle shading, no dark outline, white background, 
+game ready, Dofus style RPG
+
+🟩 TUILES DE SOL — Ajouter à la base
+ground tile, [TERRAIN], seamless edges, 
+same style with soil sides and thickness,
+top-down isometric view
+Remplace [TERRAIN] par : lush green grass / dirt path / stone cobblestone / calm water / sandy beach
+
+🌲 PROPS / ASSETS — Ajouter à la base
+[OBJET], centered, isolated, 
+no ground tile, no grass base, 
+floating asset, pure white background
+Remplace [OBJET] par : large leafy tree / pine tree / boulder rock / wooden chest...
+
+⚙️ Correctifs utiles
+ProblèmeAjouter au promptTrop de détailssimple, minimal detailsMauvais anglestrict 2:1 isometric angle, 30 degreesBase de sol indésirableno ground, no base, floatingFond pas blancpure white background, isolated objectStyle incohérentsame art style as previous assets
+
+
+
+ASSETS A FAIRE EN LISTE : 
+
+Fleurs
+isometric 2:1 game asset, small colorful flowers patch, 
+red and yellow flowers, green stems, flat vector illustration, 
+cartoon low-poly, warm soft colors, clean shapes, subtle shading, 
+no dark outline, pure white background, centered, isolated, 
+no ground tile, floating asset, game ready, Dofus style RPG
+
+Coffre au trésor
+isometric 2:1 game asset, wooden treasure chest, 
+brown wood with golden metal details, closed, flat vector illustration, 
+cartoon low-poly, warm soft colors, clean shapes, subtle shading, 
+no dark outline, pure white background, centered, isolated, 
+no ground tile, floating asset, game ready, Dofus style RPG
+
+Maison médiévale
+isometric 2:1 game asset, small medieval fantasy house, 
+stone walls, red tiled roof, wooden door, small window, 
+flat vector illustration, cartoon low-poly, warm soft colors, 
+clean shapes, subtle shading, no dark outline, pure white background, 
+centered, isolated, floating asset, game ready, Dofus style RPG
+
+Puits
+isometric 2:1 game asset, stone well, grey stones, 
+wooden roof structure, rope and bucket, flat vector illustration, 
+cartoon low-poly, warm soft colors, clean shapes, subtle shading, 
+no dark outline, pure white background, centered, isolated, 
+no ground tile, floating asset, game ready, Dofus style RPG
+
+Panneau en bois
+isometric 2:1 game asset, wooden signpost, brown wood, 
+blank sign panel, flat vector illustration, cartoon low-poly, 
+warm soft colors, clean shapes, subtle shading, no dark outline, 
+pure white background, centered, isolated, no ground tile, 
+floating asset, game ready, Dofus style RPG
+
+Clôture en bois
+isometric 2:1 game asset, wooden fence section, 
+brown wood planks, flat vector illustration, cartoon low-poly, 
+warm soft colors, clean shapes, subtle shading, no dark outline, 
+pure white background, centered, isolated, no ground tile, 
+floating asset, game ready, Dofus style RPG
+
+Lanterne
+isometric 2:1 game asset, old street lantern post, 
+metal black pole, warm glowing light, flat vector illustration, 
+cartoon low-poly, warm soft colors, clean shapes, subtle shading, 
+no dark outline, pure white background, centered, isolated, 
+no ground tile, floating asset, game ready, Dofus style RPG
+
+Pont en bois
+isometric 2:1 game asset, small wooden bridge, 
+brown wood planks, rope sides, flat vector illustration, 
+cartoon low-poly, warm soft colors, clean shapes, subtle shading, 
+no dark outline, pure white background, centered, isolated, 
+no ground tile, floating asset, game ready, Dofus style RPG

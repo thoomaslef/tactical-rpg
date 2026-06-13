@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Éditeur de Maps — Oris</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #111827;
+  color: #e0e0e0;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ── Toolbar ──────────────────────────────────────────────── */
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #0f172a;
+  border-bottom: 2px solid #1e2d45;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  min-height: 46px;
+}
+.tg {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-right: 1px solid #1e2d45;
+}
+.tg:last-child { border-right: none; }
+.tg label { font-size: 11px; color: #6b7280; white-space: nowrap; }
+.tg input[type="text"]   { width: 110px; }
+.tg input[type="number"] { width: 50px; }
+.tg input[type="text"], .tg input[type="number"] {
+  background: #1e293b; border: 1px solid #334155;
+  color: #e2e8f0; padding: 4px 7px;
+  border-radius: 5px; font-size: 12px;
+}
+button {
+  padding: 5px 11px; border-radius: 5px;
+  border: 1px solid #334155; cursor: pointer;
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+  transition: filter .12s;
+}
+button:hover { filter: brightness(1.18); }
+button.active { outline: 2px solid #38bdf8; outline-offset: 1px; }
+
+#btn-load-tiles  { background: #1d4ed8; color: #fff; border-color: #2563eb; }
+#btn-load-decos  { background: #0f766e; color: #fff; border-color: #0d9488; }
+#btn-export      { background: #15803d; color: #fff; border-color: #16a34a; }
+#btn-clear       { background: #7f1d1d; color: #fff; border-color: #991b1b; }
+#btn-fill        { background: #7c3aed; color: #fff; border-color: #8b5cf6; }
+#btn-eraser      { background: #1e293b; color: #e2e8f0; }
+#btn-eraser.active { background: #d97706; color: #000; border-color: #f59e0b; }
+#btn-resize      { background: #374151; color: #e2e8f0; }
+
+/* Rotation buttons */
+.rot-btn {
+  background: #1e293b; color: #94a3b8;
+  border: 1px solid #334155;
+  padding: 4px 9px; font-size: 13px;
+}
+.rot-btn.active {
+  background: #0c2132; color: #38bdf8;
+  border-color: #38bdf8;
+}
+
+/* ── Mode tabs ──────────────────────────────────────────────── */
+.mode-bar {
+  display: flex;
+  gap: 4px;
+  padding: 4px 6px 2px;
+  flex-shrink: 0;
+}
+.mode-tab {
+  flex: 1; text-align: center;
+  padding: 5px 0; border-radius: 5px 5px 0 0;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: .5px; cursor: pointer;
+  background: #1e293b; color: #6b7280;
+  border: 1px solid transparent;
+  transition: all .12s;
+}
+.mode-tab.active {
+  background: #0c2132; color: #38bdf8;
+  border-color: #38bdf8;
+}
+
+/* ── Layout ─────────────────────────────────────────────────── */
+#main { display: flex; flex: 1; overflow: hidden; }
+
+/* ── Palette ────────────────────────────────────────────────── */
+#palette {
+  width: 160px; flex-shrink: 0;
+  background: #0f172a;
+  border-right: 1px solid #1e2d45;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+#palette-list {
+  flex: 1; overflow-y: auto;
+  padding: 4px 5px; display: flex;
+  flex-direction: column; gap: 3px;
+}
+#palette-count {
+  font-size: 10px; color: #6b7280;
+  text-transform: uppercase; letter-spacing: 1px;
+  padding: 4px 8px;
+  border-bottom: 1px solid #1e2d45;
+  flex-shrink: 0;
+}
+.palette-item {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 5px; border-radius: 6px;
+  cursor: pointer; border: 2px solid transparent;
+  background: #1e293b;
+}
+.palette-item:hover  { background: #243347; }
+.palette-item.active { border-color: #38bdf8; background: #0c2132; }
+.palette-thumb {
+  width: 40px; height: 40px; object-fit: contain;
+  border-radius: 4px; flex-shrink: 0;
+  background: #2d3a4a;
+}
+.palette-label {
+  font-size: 9px; color: #94a3b8;
+  word-break: break-all; line-height: 1.35;
+}
+
+/* Rotation ring indicator on palette item */
+.palette-item .rot-ring {
+  font-size: 9px; color: #38bdf8;
+  margin-top: 2px;
+}
+
+/* ── Canvas area ────────────────────────────────────────────── */
+#canvas-wrap {
+  flex: 1; overflow: auto;
+  background: #1a2634;
+  cursor: crosshair; position: relative;
+}
+#map-canvas { display: block; image-rendering: pixelated; }
+
+#drop-hint {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(30,41,59,.72);
+  font-size: 22px; font-weight: 700; color: #38bdf8; letter-spacing: 2px;
+  pointer-events: none; opacity: 0; transition: opacity .2s; z-index: 10;
+}
+#canvas-wrap.drag-over #drop-hint { opacity: 1; }
+
+/* ── Status bar ─────────────────────────────────────────────── */
+#status {
+  position: fixed; bottom: 10px; right: 14px;
+  background: #0f172acc; color: #94a3b8;
+  font-size: 11px; padding: 3px 10px;
+  border-radius: 5px; pointer-events: none; z-index: 20;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0f172a; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ── Toolbar ──────────────────────────────────────────── -->
+<div id="toolbar">
+  <div class="tg">
+    <label>ID :</label>
+    <input id="inp-id" type="text" value="ma_map" placeholder="nom_map">
+  </div>
+  <div class="tg">
+    <label>Cols :</label><input id="inp-cols" type="number" value="22" min="4" max="60">
+    <label>Lignes :</label><input id="inp-rows" type="number" value="16" min="4" max="40">
+    <button id="btn-resize">↺</button>
+  </div>
+  <div class="tg">
+    <button id="btn-load-tiles">🧱 Tuiles</button>
+    <button id="btn-load-decos">🌲 Décos</button>
+    <input id="file-tiles" type="file" accept="image/*" multiple style="display:none">
+    <input id="file-decos" type="file" accept="image/*" multiple style="display:none">
+  </div>
+  <div class="tg">
+    <button id="btn-eraser">🧹 Gomme</button>
+    <button id="btn-fill">🪣 Remplir</button>
+    <button id="btn-clear">🗑️ Vider</button>
+  </div>
+  <div class="tg" id="rot-group">
+    <label>Rotation :</label>
+    <button class="rot-btn active" data-rot="0">0°</button>
+    <button class="rot-btn" data-rot="90">90°</button>
+    <button class="rot-btn" data-rot="180">180°</button>
+    <button class="rot-btn" data-rot="270">270°</button>
+  </div>
+  <div class="tg">
+    <label>Zoom :</label>
+    <input id="inp-zoom" type="number" value="100" min="25" max="300" step="5">
+    <label>%</label>
+  </div>
+  <div class="tg">
+    <button id="btn-export">💾 Exporter JSON</button>
+  </div>
+</div>
+
+<!-- ── Main ─────────────────────────────────────────────── -->
+<div id="main">
+  <div id="palette">
+    <div class="mode-bar">
+      <div class="mode-tab active" id="tab-tiles">🧱 Tuiles</div>
+      <div class="mode-tab"       id="tab-decos">🌲 Décos</div>
+    </div>
+    <div id="palette-count">0 éléments</div>
+    <div id="palette-list"></div>
+  </div>
+
+  <div id="canvas-wrap">
+    <canvas id="map-canvas"></canvas>
+    <div id="drop-hint">Déposer des images ici</div>
+  </div>
+</div>
+
+<div id="status">Col: — · Ligne: —</div>
+
+<!-- ── Script ───────────────────────────────────────────── -->
+<script>
+// ═══════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════
+const BASE_TILE = 80;
+const PAD = 36;
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let COLS = 22, ROWS = 16;
+let zoom = 1.0;
+
+// Calque tuiles : tileGrid[r][c] = index dans tiles[] (-1 = vide)
+let tileGrid = [];
+// Calque décorations : decoGrid[r][c] = { idx, rot } | null
+let decoGrid = [];
+
+let tiles  = [];    // { name, img, src }
+let decos  = [];    // { name, img, src }
+
+let mode         = 'tiles';  // 'tiles' | 'decos'
+let selectedIdx  = -1;
+let currentRot   = 0;        // 0 | 90 | 180 | 270
+let eraserMode   = false;
+let isPainting   = false;
+
+const canvas = document.getElementById('map-canvas');
+const ctx    = canvas.getContext('2d');
+const wrap   = document.getElementById('canvas-wrap');
+
+// ═══════════════════════════════════════════════
+//  DIMENSIONS
+// ═══════════════════════════════════════════════
+const ts  = () => Math.round(BASE_TILE * zoom);
+const xs  = () => Math.round(ts() / 2);
+const ys  = () => Math.round(ts() / 4);
+const ox  = () => PAD + (ROWS - 1) * xs();
+const oy  = () => PAD + Math.round(ts() * 0.05);
+
+// ═══════════════════════════════════════════════
+//  GRID
+// ═══════════════════════════════════════════════
+function initGrids(preserve = false) {
+  const oldT = tileGrid, oldD = decoGrid;
+  tileGrid = Array.from({ length: ROWS }, (_, r) =>
+    Array.from({ length: COLS }, (_, c) =>
+      preserve && oldT[r] ? (oldT[r][c] ?? -1) : -1));
+  decoGrid = Array.from({ length: ROWS }, (_, r) =>
+    Array.from({ length: COLS }, (_, c) =>
+      preserve && oldD[r] ? (oldD[r][c] ?? null) : null));
+}
+
+// ═══════════════════════════════════════════════
+//  COORDINATES
+// ═══════════════════════════════════════════════
+function g2s(col, row) {
+  return { x: ox() + (col - row) * xs(), y: oy() + (col + row) * ys() };
+}
+function s2g(sx, sy) {
+  const u = (sx - ox()) / xs();
+  const v = (sy - oy()) / ys();
+  return { col: Math.floor((u + v) / 2 + 0.5), row: Math.floor((v - u) / 2 + 0.5) };
+}
+function inBounds(c, r) { return c >= 0 && c < COLS && r >= 0 && r < ROWS; }
+// Centre isométrique d'une case :
+//   x = g2s.x      (sommet haut du losange = centre horizontal)
+//   y = g2s.y + ys (milieu vertical du losange)
+// Correspond exactement à tileCenter() côté Phaser :
+//   x = iso.x + tileW/2   →  _originX + (gx-gy)*tileW/2 + tileW/2 = g2s.x
+//   y = iso.y + tileH/2   →  _originY + (gx+gy)*tileH/2 + tileH/2 = g2s.y + ys
+function tileCenterX(col, row) { return g2s(col, row).x; }
+function tileCenterY(col, row) { return g2s(col, row).y + ys(); }
+
+// ═══════════════════════════════════════════════
+//  CANVAS SIZE
+// ═══════════════════════════════════════════════
+function resizeCanvas() {
+  canvas.width  = PAD * 2 + (COLS + ROWS - 1) * xs() + ts();
+  canvas.height = PAD * 2 + (COLS + ROWS - 1) * ys() + ts();
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const T = ts(), X = xs(), Y = ys();
+
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const { x, y } = g2s(c, r);
+      const ti = tileGrid[r][c];
+
+      if (ti >= 0 && tiles[ti]) {
+        // Tuile image — même origine que le jeu : (iso.x, iso.y) = (x - T/2, y)
+        ctx.drawImage(tiles[ti].img, x - T / 2, y, T, T);
+      } else {
+        // Case vide
+        ctx.save();
+        ctx.setLineDash([3, 4]);
+        ctx.strokeStyle = 'rgba(200,213,224,0.35)';
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(x,       y);
+        ctx.lineTo(x + X,   y + Y);
+        ctx.lineTo(x,       y + Y * 2);
+        ctx.lineTo(x - X,   y + Y);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // ── Déco sur ce calque ──
+      const d = decoGrid[r][c];
+      if (d !== null && decos[d.idx]) {
+        const cx = tileCenterX(c, r);
+        const cy = tileCenterY(c, r);
+        const ds = T * 1.8;
+        drawSprite(decos[d.idx].img, cx, cy, ds, d.rot);
+      }
+    }
+  }
+}
+
+function drawSprite(img, cx, cy, ds, deg) {
+  // Phaser origin(0.5, 0.82) : le "pied" du sprite est ancré au centre de la tuile
+  // → Le sprite est dessiné de sorte que son point (0.5w, 0.82h) soit en (cx, cy)
+  // Centre visuel de l'image (pour la rotation) :
+  const pivotY = cy - ds * 0.82 + ds * 0.5;  // cy - 0.32*ds
+
+  ctx.save();
+  ctx.translate(cx, pivotY);
+  if (deg) ctx.rotate(deg * Math.PI / 180);
+  ctx.drawImage(img, -ds / 2, -ds * 0.5, ds, ds);
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════
+//  PALETTE
+// ═══════════════════════════════════════════════
+function refreshPalette() {
+  const list  = document.getElementById('palette-list');
+  const count = document.getElementById('palette-count');
+  const items = mode === 'tiles' ? tiles : decos;
+  count.textContent = `${items.length} élément${items.length !== 1 ? 's' : ''}`;
+  list.innerHTML = '';
+
+  items.forEach((t, i) => {
+    const item = document.createElement('div');
+    item.className = 'palette-item' + (selectedIdx === i ? ' active' : '');
+
+    const img = document.createElement('img');
+    img.className = 'palette-thumb';
+    img.src = t.previewSrc || t.src;
+
+    const info = document.createElement('div');
+    info.style.minWidth = 0;
+    const lbl = document.createElement('div');
+    lbl.className = 'palette-label';
+    let name = t.name.replace(/\.[^.]+$/, '');
+    if (name.length > 22) name = name.slice(0, 20) + '…';
+    lbl.textContent = name;
+    info.appendChild(lbl);
+
+    item.append(img, info);
+    item.addEventListener('click', () => {
+      selectedIdx = i;
+      eraserMode = false;
+      document.getElementById('btn-eraser').classList.remove('active');
+      refreshPalette();
+    });
+    list.appendChild(item);
+  });
+
+  // Rotation UI only relevant in deco mode
+  document.getElementById('rot-group').style.opacity = mode === 'decos' ? '1' : '0.35';
+}
+
+// ═══════════════════════════════════════════════
+//  MODE SWITCH
+// ═══════════════════════════════════════════════
+document.getElementById('tab-tiles').addEventListener('click', () => {
+  mode = 'tiles'; selectedIdx = -1; eraserMode = false;
+  document.getElementById('btn-eraser').classList.remove('active');
+  document.getElementById('tab-tiles').classList.add('active');
+  document.getElementById('tab-decos').classList.remove('active');
+  refreshPalette();
+});
+document.getElementById('tab-decos').addEventListener('click', () => {
+  mode = 'decos'; selectedIdx = -1; eraserMode = false;
+  document.getElementById('btn-eraser').classList.remove('active');
+  document.getElementById('tab-decos').classList.add('active');
+  document.getElementById('tab-tiles').classList.remove('active');
+  refreshPalette();
+});
+
+// ═══════════════════════════════════════════════
+//  ROTATION BUTTONS
+// ═══════════════════════════════════════════════
+document.querySelectorAll('.rot-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentRot = parseInt(btn.dataset.rot);
+    document.querySelectorAll('.rot-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// Raccourci R = rotation +90°
+window.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 'r' || e.key === 'R') {
+    currentRot = (currentRot + 90) % 360;
+    document.querySelectorAll('.rot-btn').forEach(b => {
+      b.classList.toggle('active', parseInt(b.dataset.rot) === currentRot);
+    });
+  }
+});
+
+// ═══════════════════════════════════════════════
+//  PAINT / PLACE
+// ═══════════════════════════════════════════════
+function getCanvasPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    sx: (e.clientX - rect.left)  * (canvas.width  / rect.width),
+    sy: (e.clientY - rect.top)   * (canvas.height / rect.height),
+  };
+}
+
+function paintAt(e) {
+  const { sx, sy } = getCanvasPos(e);
+  const { col, row } = s2g(sx, sy);
+  if (!inBounds(col, row)) return;
+
+  if (eraserMode) {
+    if (mode === 'tiles') tileGrid[row][col] = -1;
+    else decoGrid[row][col] = null;
+    render();
+    return;
+  }
+
+  if (selectedIdx < 0) return;
+
+  if (mode === 'tiles') {
+    if (!tiles[selectedIdx]) return;
+    if (tileGrid[row][col] === selectedIdx) return;
+    tileGrid[row][col] = selectedIdx;
+  } else {
+    if (!decos[selectedIdx]) return;
+    const cur = decoGrid[row][col];
+    if (cur && cur.idx === selectedIdx && cur.rot === currentRot) return;
+    decoGrid[row][col] = { idx: selectedIdx, rot: currentRot };
+  }
+  render();
+}
+
+// Clic droit = effacer déco
+canvas.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  const { sx, sy } = getCanvasPos(e);
+  const { col, row } = s2g(sx, sy);
+  if (!inBounds(col, row)) return;
+  if (mode === 'decos') decoGrid[row][col] = null;
+  else tileGrid[row][col] = -1;
+  render();
+});
+
+canvas.addEventListener('mousedown', e => {
+  if (e.button === 0) { isPainting = true; paintAt(e); }
+});
+canvas.addEventListener('mousemove', e => {
+  const { sx, sy } = getCanvasPos(e);
+  const { col, row } = s2g(sx, sy);
+  const ok = inBounds(col, row);
+  document.getElementById('status').textContent =
+    ok ? `Col: ${col}  ·  Ligne: ${row}${mode === 'decos' ? `  ·  Rot: ${currentRot}°` : ''}` : 'Col: —  ·  Ligne: —';
+  if (isPainting && e.button === 0) paintAt(e);
+});
+window.addEventListener('mouseup', () => { isPainting = false; });
+
+// ═══════════════════════════════════════════════
+//  FOND BLANC → TRANSPARENT
+// ═══════════════════════════════════════════════
+function removeWhite(sourceImg) {
+  const W = sourceImg.naturalWidth  || sourceImg.width;
+  const H = sourceImg.naturalHeight || sourceImg.height;
+  const off = document.createElement('canvas');
+  off.width = W; off.height = H;
+  const oc = off.getContext('2d');
+  oc.drawImage(sourceImg, 0, 0);
+  const id = oc.getImageData(0, 0, W, H);
+  const d  = id.data;
+  const THR = 240;
+  const isW = i => d[i] > THR && d[i+1] > THR && d[i+2] > THR;
+  const vis = new Uint8Array(W * H);
+  const q = [];
+  const enq = (x, y) => {
+    if (x < 0 || y < 0 || x >= W || y >= H) return;
+    const n = y * W + x; if (vis[n]) return;
+    if (!isW(n * 4)) return;
+    vis[n] = 1; q.push(x, y);
+  };
+  enq(0,0); enq(W-1,0); enq(0,H-1); enq(W-1,H-1);
+  let qi = 0;
+  while (qi < q.length) {
+    const x = q[qi++], y = q[qi++];
+    const p = (y * W + x) * 4;
+    d[p]=255; d[p+1]=255; d[p+2]=255; d[p+3]=0;
+    enq(x+1,y); enq(x-1,y); enq(x,y+1); enq(x,y-1);
+  }
+  for (let i = 0; i < d.length; i += 4) {
+    if (d[i+3] === 0) continue;
+    const b = (d[i]+d[i+1]+d[i+2])/3;
+    if (b > 220) d[i+3] = Math.round(d[i+3] * (1-(b-220)/35));
+  }
+  oc.putImageData(id, 0, 0);
+  const r = new Image(); r.src = off.toDataURL('image/png'); return r;
+}
+
+// ═══════════════════════════════════════════════
+//  LOAD FILES
+// ═══════════════════════════════════════════════
+function loadFiles(files, targetArray) {
+  const arr = Array.from(files).filter(f => f.type.startsWith('image/'));
+  if (!arr.length) return;
+  let done = 0;
+  arr.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const raw = new Image();
+      raw.onload = () => {
+        const clean = removeWhite(raw);
+        const finish = () => {
+          targetArray.push({ name: file.name, img: clean, src: clean.src, previewSrc: ev.target.result });
+          done++;
+          if (done === arr.length) {
+            if (selectedIdx < 0) selectedIdx = 0;
+            refreshPalette();
+            render();
+          }
+        };
+        clean.complete && clean.naturalWidth ? finish() : (clean.onload = finish);
+      };
+      raw.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+document.getElementById('btn-load-tiles').addEventListener('click', () => {
+  mode = 'tiles';
+  document.getElementById('tab-tiles').click();
+  document.getElementById('file-tiles').click();
+});
+document.getElementById('btn-load-decos').addEventListener('click', () => {
+  mode = 'decos';
+  document.getElementById('tab-decos').click();
+  document.getElementById('file-decos').click();
+});
+document.getElementById('file-tiles').addEventListener('change', e => {
+  loadFiles(e.target.files, tiles); e.target.value = '';
+});
+document.getElementById('file-decos').addEventListener('change', e => {
+  loadFiles(e.target.files, decos); e.target.value = '';
+});
+
+// Drag & drop (charge selon le mode actif)
+wrap.addEventListener('dragenter', e => { e.preventDefault(); wrap.classList.add('drag-over'); });
+wrap.addEventListener('dragover',  e => { e.preventDefault(); wrap.classList.add('drag-over'); });
+wrap.addEventListener('dragleave', e => { if (!wrap.contains(e.relatedTarget)) wrap.classList.remove('drag-over'); });
+wrap.addEventListener('drop', e => {
+  e.preventDefault(); wrap.classList.remove('drag-over');
+  loadFiles(e.dataTransfer.files, mode === 'tiles' ? tiles : decos);
+});
+
+// ═══════════════════════════════════════════════
+//  TOOLBAR ACTIONS
+// ═══════════════════════════════════════════════
+document.getElementById('btn-eraser').addEventListener('click', () => {
+  eraserMode = !eraserMode;
+  if (eraserMode) selectedIdx = -1;
+  document.getElementById('btn-eraser').classList.toggle('active', eraserMode);
+});
+
+document.getElementById('btn-fill').addEventListener('click', () => {
+  if (mode !== 'tiles') { alert('Remplir fonctionne uniquement en mode Tuiles.'); return; }
+  if (selectedIdx < 0 || !tiles[selectedIdx]) { alert('Sélectionne une tuile.'); return; }
+  if (!confirm(`Remplir toute la grille avec "${tiles[selectedIdx].name}" ?`)) return;
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      tileGrid[r][c] = selectedIdx;
+  render();
+});
+
+document.getElementById('btn-clear').addEventListener('click', () => {
+  const what = mode === 'tiles' ? 'les tuiles' : 'les décorations';
+  if (!confirm(`Vider ${what} ?`)) return;
+  if (mode === 'tiles')
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) tileGrid[r][c] = -1;
+  else
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) decoGrid[r][c] = null;
+  render();
+});
+
+document.getElementById('btn-resize').addEventListener('click', () => {
+  const nc = parseInt(document.getElementById('inp-cols').value);
+  const nr = parseInt(document.getElementById('inp-rows').value);
+  if (isNaN(nc) || isNaN(nr) || nc < 4 || nr < 4) return;
+  COLS = nc; ROWS = nr;
+  initGrids(true); resizeCanvas(); render();
+});
+
+document.getElementById('inp-zoom').addEventListener('change', e => {
+  zoom = Math.max(0.25, Math.min(3.0, parseInt(e.target.value) / 100));
+  resizeCanvas(); render();
+});
+
+// ═══════════════════════════════════════════════
+//  ZOOM MOLETTE
+// ═══════════════════════════════════════════════
+wrap.addEventListener('wheel', e => {
+  e.preventDefault();
+  const delta = e.deltaY < 0 ? 5 : -5;
+  const nz = Math.max(25, Math.min(300, Math.round(zoom * 100) + delta));
+  zoom = nz / 100;
+  document.getElementById('inp-zoom').value = nz;
+  resizeCanvas(); render();
+}, { passive: false });
+
+// ═══════════════════════════════════════════════
+//  EXPORT JSON
+// ═══════════════════════════════════════════════
+document.getElementById('btn-export').addEventListener('click', () => {
+  const mapId = document.getElementById('inp-id').value.trim() || 'ma_map';
+
+  // ── Manifest tuiles ──
+  const usedTiles = new Set();
+  for (const row of tileGrid) for (const v of row) if (v >= 0) usedTiles.add(v);
+  const tileManifest = {};
+  usedTiles.forEach(i => { tileManifest[i] = tiles[i].name; });
+
+  // ── Décorations ──
+  const decorations = [];
+  let dIdx = 0;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const d = decoGrid[r][c];
+      if (d !== null && decos[d.idx]) {
+        const name = decos[d.idx].name;
+        // Nom sans extension = SpriteId
+        const spriteId = name.replace(/\.[^.]+$/, '');
+        const entry = {
+          id: `d_${mapId}_${dIdx++}`,
+          sprite: spriteId,
+          x: c,
+          y: r,
+          scale: 1.0,
+        };
+        if (d.rot !== 0) entry.rotation = d.rot;
+        decorations.push(entry);
+      }
+    }
+  }
+
+  const data = {
+    id: mapId,
+    width: COLS,
+    height: ROWS,
+    zone: mapId,
+    coords: [0, 0],
+    tileManifest: Object.keys(tileManifest).length ? tileManifest : undefined,
+    tiles: tileGrid.map(row => [...row]),
+    exits:  [],
+    spawns: [],
+    chests: [],
+    npcs:   [],
+    decorations,
+  };
+  // Supprimer tileManifest si vide
+  if (!data.tileManifest) delete data.tileManifest;
+
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a'); a.href = url;
+  a.download = `${mapId}.json`; a.click();
+  URL.revokeObjectURL(url);
+
+  console.log(`✅ Export "${mapId}.json" — ${COLS}×${ROWS}, ${usedTiles.size} tuile(s), ${decorations.length} déco(s)`);
+});
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+initGrids();
+resizeCanvas();
+render();
+refreshPalette();
+</script>
+</body>
+</html>

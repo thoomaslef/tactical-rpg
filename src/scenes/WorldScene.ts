@@ -16,6 +16,7 @@ import { getQuestPanel } from '../ui/QuestPanel';
 import { getBankModal } from '../ui/BankModal';
 import { getShopModal } from '../ui/ShopModal';
 import { getSpellUpgradeUI } from '../ui/SpellUpgradeUI';
+import { getBestiary } from '../ui/Bestiary';
 import { ALL_SPELLS } from '../data/spells/spellsData';
 
 const BLOCKED = new Set([3, 4, 6, 8]);
@@ -1008,7 +1009,22 @@ export class WorldScene extends Phaser.Scene {
       questBtn.on('pointerover', () => questBtn.setColor('#e6e8ee'));
       questBtn.on('pointerout',  () => questBtn.setColor('#f59e0b'));
       questBtn.on('pointerdown', () => this.openQuestPanel());
+
+      const questBounds = questBtn.getBounds();
+      const bestBtn = this.add.text(questBounds.right + 8, barH / 2, '📖 Bestiaire', {
+        fontSize, color: '#34d399', fontStyle: 'bold', backgroundColor: '#071a12', padding: pad,
+      }).setOrigin(0, 0.5).setDepth(10001).setInteractive({ cursor: 'pointer' });
+      bestBtn.on('pointerover', () => bestBtn.setColor('#e6e8ee'));
+      bestBtn.on('pointerout',  () => bestBtn.setColor('#34d399'));
+      bestBtn.on('pointerdown', () => this.openBestiary());
     }
+  }
+
+  private openBestiary() {
+    if (this.isMoving || this.isDialogueOpen || this.isChestOpen) return;
+    const b = getBestiary();
+    if (b.isOpen()) { b.close(); return; }
+    b.open();
   }
 
 

@@ -1,0 +1,23 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /d D:\\TommyStudio\\Application\\tactical-rpg && npm run deploy"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npm run deploy)",
+      "Bash(vercel *)",
+      "Bash(npx vite *)",
+      "Bash(npx tsc *)"
+    ]
+  }
+}

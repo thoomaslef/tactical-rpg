@@ -1,0 +1,77 @@
+{
+    "activeFile": "public/Assets/maps/sans titre.tmx",
+    "expandedProjectPaths": [
+        "public",
+        "public/Assets/tiles",
+        "public/Assets",
+        "public/Assets/maps",
+        ".",
+        "public/Assets/tiles/resized"
+    ],
+    "file.lastUsedOpenFilter": "Tous les Fichiers (*)",
+    "fileStates": {
+        "public/Assets/maps/city-tiles.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 0.25
+        },
+        "public/Assets/maps/isometric-2-1-game-ground-tile-stone-cob_OBKfiHesUv2KZN7u6SXBpg_k6EKObmQSYOmsZspro7NYQ_cover.tsx": {
+            "dynamicWrapping": false,
+            "scaleInDock": 0.125
+        },
+        "public/Assets/maps/newsol.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "public/Assets/maps/sans titre.tmx": {
+            "scale": 1,
+            "selectedLayer": -1,
+            "viewCenter": {
+                "x": 1308,
+                "y": 617
+            }
+        },
+        "public/Assets/tiles/newsol.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 0.0625,
+            "scaleInEditor": 1
+        },
+        "public/Assets/tiles/resized/sol.tsx": {
+            "dynamicWrapping": false,
+            "scaleInDock": 0.25,
+            "scaleInEditor": 1
+        },
+        "public/Assets/tiles/tiles_sol.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 0.0625,
+            "scaleInEditor": 1
+        }
+    },
+    "last.externalTilesetPath": "D:/TommyStudio/Application/tactical-rpg/public/Assets/kenney_isometric-city/Spritesheet",
+    "last.imagePath": "D:/TommyStudio/Application/tactical-rpg/public/Assets/tiles/resized",
+    "map.height": 20,
+    "map.lastUsedFormat": "tmx",
+    "map.orientation": "2",
+    "map.tileHeight": 128,
+    "map.tileWidth": 256,
+    "map.width": 20,
+    "openFiles": [
+        "public/Assets/maps/sans titre.tmx"
+    ],
+    "project": "sans titre.tiled-project",
+    "recentFiles": [
+        "public/Assets/maps/sans titre.tmx",
+        "public/Assets/tiles/resized/sol.tsx",
+        "public/Assets/tiles/newsol.tsx",
+        "public/Assets/tiles/tiles_sol.tsx",
+        "public/Assets/maps/newsol.tsx",
+        "public/Assets/maps/city-tiles.tsx"
+    ],
+    "tileset.lastUsedFilter": "Fichiers de jeu de tuiles Tiled (*.tsx *.xml)",
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 64,
+        "width": 128
+    },
+    "tileset.type": 1
+}

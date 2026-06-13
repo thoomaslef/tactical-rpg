@@ -10,7 +10,7 @@ import { getUpgradedSpell } from '../data/spells/spellUpgrades';
 import { ELEMENT_COLORS } from '../config/spells.config';
 import { SpellManager } from '../systems/SpellManager';
 import { HUD } from '../ui/hud';
-import { PlayerStats, emptyStats, maxHp, maxPa, maxPm, maxMagic, effectiveResistance, applyXpBonus, getLevel, finalDamagePercent } from '../game/stats';
+import { PlayerStats, emptyStats, maxHp, maxPa, maxPm, maxMagic, effectiveResistance, getLevel, finalDamagePercent } from '../game/stats';
 import { PlayerEquipment, InventoryEntry, emptyEquipment, getEquipBonuses, getMeleeSpell, ITEMS, RESOURCE_CATALOG } from '../game/items';
 import { MonsterSpawn } from '../maps/MapLoader';
 import { gameState } from '../game/gameState';
@@ -1322,14 +1322,9 @@ export class CombatScene extends Phaser.Scene {
     ];
     const drops: InventoryEntry[] = [];
 
-    // Bonus de Chance : stat manuelle
-    const luckBonus = (this.playerStats.chance ?? 0);
-    const dropChance = Math.min(0.90, 0.10 + luckBonus * 0.01);
-    const rollLuck = () => Math.random() < dropChance;
-
-    // Panoplie : dropChance par item
+    // Panoplie : 10% fixe par item
     for (const id of PANOPLIE_ITEMS) {
-      if (rollLuck()) drops.push({ id, qty: 1 });
+      if (Math.random() < 0.10) drops.push({ id, qty: 1 });
     }
 
     // Clef de l'Antre : 10% fixe par rat tué (indépendant de la Chance)
@@ -1385,10 +1380,9 @@ export class CombatScene extends Phaser.Scene {
   private showResult(victory: boolean) {
     this._hideUnitTooltip();
     const W = this.scale.width, H = this.scale.height;
-    const xpGain   = victory ? applyXpBonus(
-      this.monsters.reduce((sum, m) => sum + (m.xpDrop ?? 100), 0),
-      this.playerStats
-    ) : 0;
+    const xpGain   = victory
+      ? this.monsters.reduce((sum, m) => sum + (m.xpDrop ?? 100), 0)
+      : 0;
     const goldGain = victory
       ? this.monsters.reduce((sum, m) => sum + (m.goldDrop ?? 100), 0)
       : 0;
@@ -1622,10 +1616,7 @@ export class CombatScene extends Phaser.Scene {
         if (heroPanel)  heroPanel.style.display  = 'none';
         if (enemyPanel) enemyPanel.style.display = 'none';
         this.scene.start('WorldScene', {
-          xp:               this.playerXP + applyXpBonus(
-            this.monsters.reduce((sum, m) => sum + (m.xpDrop ?? 100), 0),
-            this.playerStats
-          ),
+          xp:               this.playerXP + this.monsters.reduce((sum, m) => sum + (m.xpDrop ?? 100), 0),
           gold:             dungeonNewGold,
           playerStats:      this.playerStats,
           equipment:        this.playerEquipment,

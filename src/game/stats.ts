@@ -1,6 +1,5 @@
 export interface PlayerStats {
   vitalite: number;
-  sagesse: number;
   fluide: number;
   portee: number;
   eau: number;
@@ -12,11 +11,10 @@ export interface PlayerStats {
   electrik: number;
   soin: number;
   resistance: number;
-  chance: number;
 }
 
 export function emptyStats(): PlayerStats {
-  return { vitalite: 0, sagesse: 0, fluide: 0, portee: 0, eau: 0, feu: 0, air: 0, terre: 0, psy: 0, glace: 0, electrik: 0, soin: 0, resistance: 0, chance: 0 };
+  return { vitalite: 0, fluide: 0, portee: 0, eau: 0, feu: 0, air: 0, terre: 0, psy: 0, glace: 0, electrik: 0, soin: 0, resistance: 0 };
 }
 
 /**
@@ -84,6 +82,6 @@ export function effectiveResistance(stats: PlayerStats): number {
   return Math.floor(stats.resistance / 3);
 }
 
-export function applyXpBonus(baseXp: number, stats: PlayerStats): number {
-  return Math.floor(baseXp * (1 + stats.sagesse / 100));
+export function applyXpBonus(baseXp: number): number {
+  return baseXp;
 }

@@ -16,19 +16,17 @@ interface StatCfg {
 }
 
 const STAT_CFGS: StatCfg[] = [
-  { key: 'vitalite',   label: 'Vitalité', icon: '❤️',  desc: '+1 PV maximum',         color: '#f87171' },
-  { key: 'sagesse',    label: 'Sagesse',  icon: '📚',  desc: '+1 % bonus XP',         color: '#c084fc' },
+  { key: 'vitalite',   label: 'Vitalité', icon: '❤️',  desc: '+1 PV maximum',           color: '#f87171' },
   { key: 'fluide',     label: 'Fluide',   icon: '💧',  desc: '+1 Fluide max par 5 pts', color: '#a855f7' },
-  { key: 'eau',        label: 'EAU',      icon: '🌊',  desc: 'Sorts Eau + %',              color: '#7dd3fc' },
-  { key: 'feu',        label: 'FEU',      icon: '🔥',  desc: 'Sorts Feu + %',              color: '#fb923c' },
-  { key: 'air',        label: 'AIR',      icon: '🌪️', desc: 'Sorts Air + %',              color: '#bef264' },
-  { key: 'terre',      label: 'TERRE',    icon: '🌿',  desc: 'Sorts Terre + %',            color: '#84cc16' },
-  { key: 'psy',        label: 'PSY',      icon: '🔮',  desc: 'Sorts Psy + %',              color: '#e879f9' },
-  { key: 'glace',      label: 'GLACE',    icon: '❄️',  desc: 'Sorts Glace + %',            color: '#67e8f9' },
-  { key: 'electrik',   label: 'ÉLECTRIK', icon: '⚡',  desc: 'Sorts Électrik + %',         color: '#facc15' },
-  { key: 'soin',       label: 'Soin',     icon: '💚',  desc: 'Bonus soins + %',            color: '#4ade80' },
-  { key: 'resistance', label: 'Résist.',  icon: '🛡️', desc: '-1 dégât reçu / 3 pts',     color: '#94a3b8' },
-  { key: 'chance',     label: 'Chance',   icon: '🍀',  desc: '+1 % taux de drop / pt',     color: '#34d399' },
+  { key: 'eau',        label: 'EAU',      icon: '🌊',  desc: 'Sorts Eau + %',           color: '#7dd3fc' },
+  { key: 'feu',        label: 'FEU',      icon: '🔥',  desc: 'Sorts Feu + %',           color: '#fb923c' },
+  { key: 'air',        label: 'AIR',      icon: '🌪️', desc: 'Sorts Air + %',           color: '#bef264' },
+  { key: 'terre',      label: 'TERRE',    icon: '🌿',  desc: 'Sorts Terre + %',         color: '#84cc16' },
+  { key: 'psy',        label: 'PSY',      icon: '🔮',  desc: 'Sorts Psy + %',           color: '#e879f9' },
+  { key: 'glace',      label: 'GLACE',    icon: '❄️',  desc: 'Sorts Glace + %',         color: '#67e8f9' },
+  { key: 'electrik',   label: 'ÉLECTRIK', icon: '⚡',  desc: 'Sorts Électrik + %',      color: '#facc15' },
+  { key: 'soin',       label: 'Soin',     icon: '💚',  desc: 'Bonus soins + %',         color: '#4ade80' },
+  { key: 'resistance', label: 'Résist.',  icon: '🛡️', desc: '-1 dégât reçu / 3 pts',  color: '#94a3b8' },
 ];
 
 let _instance: CharacterMenu | null = null;
@@ -261,7 +259,6 @@ export class CharacterMenu {
     const effPa  = maxPa(this.stats) + eb.pa;
     const effPm  = maxPm(this.stats) + eb.pm;
     const lvlDmgPct = finalDamagePercent(lvl);
-    const dropChancePct = Math.min(90, 10 + this.stats.chance);
 
     const foot = el('div', { marginTop: '16px' });
 
@@ -327,13 +324,6 @@ export class CharacterMenu {
       { icon: '💚', label: 'Soin',     value: String(this.stats.soin),                  color: '#4ade80' },
     ]));
 
-    // ── Section Utilitaires ──
-    foot.appendChild(secTitle('Utilitaires'));
-    foot.appendChild(statGrid([
-      { icon: '📚', label: 'Bonus XP',   value: `+${this.stats.sagesse} %`, color: '#c084fc' },
-      { icon: '🍀', label: 'Drop',       value: `${dropChancePct} %`,       color: '#34d399' },
-      { icon: '🍀', label: 'Chance pts', value: String(this.stats.chance),  color: '#34d399' },
-    ]));
 
     panel.appendChild(foot);
 

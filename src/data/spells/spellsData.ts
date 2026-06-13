@@ -65,7 +65,7 @@ export const ALL_SPELLS: ISpell[] = [
     isModifiable: false,
     isTeleport: true,
     ignoresLineOfSight: true,  // téléportation : pas de projectile, pas de LDV requise
-    learnLevel: 4,
+    learnLevel: 25,
     description: 'Téléportation sur une case adjacente vide — aucun dégât. Coûte 2 PA et 1 Fluide.',
   },
 
