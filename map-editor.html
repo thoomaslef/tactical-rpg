@@ -210,6 +210,22 @@ button.active { outline: 2px solid #38bdf8; outline-offset: 1px; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #0f172a; }
 ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+
+/* ── Import notice ──────────────────────────────────────────── */
+#import-notice {
+  position: fixed; top: 56px; left: 50%; transform: translateX(-50%);
+  background: #0f2744; border: 1px solid #38bdf8; border-radius: 10px;
+  padding: 12px 18px; max-width: 520px; width: 90%;
+  font-size: 11px; color: #cbd5e1; line-height: 1.7;
+  z-index: 50; box-shadow: 0 8px 32px rgba(0,0,0,.6);
+  display: none;
+}
+#import-notice strong { color: #38bdf8; }
+#import-notice .tile-list { color: #fbbf24; font-family: monospace; font-size: 10px; }
+#import-notice .close-notice {
+  float: right; cursor: pointer; color: #6b7280; font-size: 14px; margin-left: 10px;
+}
+#btn-import { background: #1e3a5f; color: #38bdf8; border-color: #38bdf8; }
 </style>
 </head>
 <body>
@@ -249,8 +265,15 @@ button.active { outline: 2px solid #38bdf8; outline-offset: 1px; }
     <label>%</label>
   </div>
   <div class="tg">
+    <button id="btn-import">📂 Ouvrir JSON</button>
     <button id="btn-export">💾 Exporter JSON</button>
+    <input id="file-import" type="file" accept=".json,application/json" style="display:none">
   </div>
+</div>
+
+<div id="import-notice">
+  <span class="close-notice" id="close-notice">✕</span>
+  <div id="import-notice-body"></div>
 </div>
 
 <!-- ── Main ─────────────────────────────────────────────── -->
@@ -306,6 +329,10 @@ let isPainting   = false;
 
 // Config exit active
 let exitConfig = { targetMap: '', targetX: 0, targetY: 0 };
+
+// Manifest importé : index → nom de fichier attendu
+let importedTileManifest = {};   // { "0": "filename.jpeg", ... }
+let importedDecoSprites  = {};   // { "spriteName": [{ r, c, rot }] } (placeholders)
 
 const canvas = document.getElementById('map-canvas');
 const ctx    = canvas.getContext('2d');
@@ -391,11 +418,32 @@ function render() {
 
       // ── Déco ──
       const d = decoGrid[r][c];
-      if (d !== null && decos[d.idx]) {
+      if (d !== null) {
         const cx = tileCenterX(c, r);
         const cy = tileCenterY(c, r);
-        const ds = T * 1.8;
-        drawSprite(decos[d.idx].img, cx, cy, ds, d.rot);
+        if (d.idx >= 0 && decos[d.idx]) {
+          drawSprite(decos[d.idx].img, cx, cy, T * 1.8, d.rot);
+        } else if (d.idx === -1) {
+          // Placeholder : image pas encore chargée
+          ctx.save();
+          ctx.globalAlpha = 0.55;
+          ctx.fillStyle = '#7c3aed';
+          ctx.beginPath();
+          ctx.moveTo(cx, cy - Y);
+          ctx.lineTo(cx + X * 0.6, cy);
+          ctx.lineTo(cx, cy + Y);
+          ctx.lineTo(cx - X * 0.6, cy);
+          ctx.closePath();
+          ctx.fill();
+          ctx.globalAlpha = 1;
+          const lbl = (d.spriteName || '?').slice(0, 6);
+          ctx.fillStyle = '#e9d5ff';
+          ctx.font = `bold ${Math.max(7, Math.round(Y * 0.9))}px monospace`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(lbl, cx, cy);
+          ctx.restore();
+        }
       }
 
       // ── Sortie ──
@@ -772,6 +820,8 @@ function loadFiles(files, targetArray) {
           done++;
           if (done === arr.length) {
             if (selectedIdx < 0) selectedIdx = 0;
+            if (targetArray === tiles) tryMatchTilesAfterLoad();
+            if (targetArray === decos) tryMatchDecosAfterLoad();
             refreshPalette();
             render();
           }
@@ -942,6 +992,156 @@ document.getElementById('btn-export').addEventListener('click', () => {
 
   console.log(`✅ Export "${mapId}.json" — ${COLS}×${ROWS}, ${usedTiles.size} tuile(s), ${decorations.length} déco(s), ${exits.length} sortie(s)`);
 });
+
+// ═══════════════════════════════════════════════
+//  IMPORT JSON
+// ═══════════════════════════════════════════════
+function importMap(data) {
+  // ── Dimensions & ID ──
+  COLS = data.width  || COLS;
+  ROWS = data.height || ROWS;
+  document.getElementById('inp-cols').value = COLS;
+  document.getElementById('inp-rows').value = ROWS;
+  document.getElementById('inp-id').value   = data.id || 'ma_map';
+
+  // ── Réinitialise les grilles ──
+  tiles = []; decos = []; selectedIdx = -1;
+  importedTileManifest = {};
+  importedDecoSprites  = {};
+  initGrids();
+  resizeCanvas();
+
+  // ── Tuiles ──
+  if (data.tiles) {
+    for (let r = 0; r < Math.min(ROWS, data.tiles.length); r++) {
+      const row = data.tiles[r] || [];
+      for (let c = 0; c < Math.min(COLS, row.length); c++) {
+        tileGrid[r][c] = row[c] ?? -1;
+      }
+    }
+  }
+  if (data.tileManifest) {
+    importedTileManifest = data.tileManifest; // { "0": "file.jpeg", ... }
+  }
+
+  // ── Sorties ──
+  if (data.exits) {
+    for (const ex of data.exits) {
+      const c = ex.from?.x ?? ex.x ?? -1;
+      const r = ex.from?.y ?? ex.y ?? -1;
+      if (inBounds(c, r)) {
+        exitGrid[r][c] = { targetMap: ex.targetMap, targetX: ex.targetX, targetY: ex.targetY };
+      }
+    }
+  }
+
+  // ── Décorations (placeholders) ──
+  if (data.decorations) {
+    for (const d of data.decorations) {
+      if (!inBounds(d.x, d.y)) continue;
+      const spriteName = d.sprite || '';
+      // idx=-1 = placeholder (image pas encore chargée)
+      decoGrid[d.y][d.x] = { idx: -1, rot: d.rotation ?? 0, spriteName };
+      if (!importedDecoSprites[spriteName]) importedDecoSprites[spriteName] = [];
+      importedDecoSprites[spriteName].push({ r: d.y, c: d.x, rot: d.rotation ?? 0 });
+    }
+  }
+
+  render();
+  refreshPalette();
+  showImportNotice(data);
+}
+
+function showImportNotice(data) {
+  const notice = document.getElementById('import-notice');
+  const body   = document.getElementById('import-notice-body');
+
+  const tileNames = Object.entries(importedTileManifest)
+    .sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
+    .map(([idx, name]) => `  [${idx}] ${name}`);
+
+  const decoNames = Object.keys(importedDecoSprites);
+
+  let html = `<strong>✅ Map "${data.id}" importée</strong> — ${COLS}×${ROWS}`;
+
+  if (tileNames.length) {
+    html += `<br><br><strong>🧱 Rechargez les tuiles dans cet ordre :</strong><br>`;
+    html += `<span class="tile-list">${tileNames.join('<br>')}</span>`;
+  }
+  if (decoNames.length) {
+    html += `<br><br><strong>🌲 Rechargez les sprites de décoration :</strong><br>`;
+    html += `<span class="tile-list">${decoNames.map(n => `  ${n}`).join('<br>')}</span>`;
+  }
+  if (!tileNames.length && !decoNames.length) {
+    html += `<br><span style="color:#4ade80">Aucune image à recharger.</span>`;
+  }
+
+  body.innerHTML = html;
+  notice.style.display = 'block';
+}
+
+document.getElementById('close-notice').addEventListener('click', () => {
+  document.getElementById('import-notice').style.display = 'none';
+});
+
+document.getElementById('btn-import').addEventListener('click', () => {
+  document.getElementById('file-import').click();
+});
+
+document.getElementById('file-import').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      importMap(data);
+    } catch (err) {
+      alert('Fichier JSON invalide : ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+// ── Quand on charge des tuiles après un import : auto-match par nom ──
+function tryMatchTilesAfterLoad() {
+  if (!Object.keys(importedTileManifest).length) return;
+  // Reconstruit le mapping index→tile selon le nom de fichier
+  const byName = {};
+  tiles.forEach((t, i) => { byName[t.name] = i; });
+  let matched = false;
+  // Remet à jour tileGrid avec les vrais index
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const old = tileGrid[r][c];
+      if (old < 0) continue;
+      const expectedName = importedTileManifest[String(old)];
+      if (expectedName && byName[expectedName] !== undefined) {
+        tileGrid[r][c] = byName[expectedName];
+        matched = true;
+      }
+    }
+  }
+  if (matched) render();
+}
+
+// ── Quand on charge des décos après un import : auto-match par nom de sprite ──
+function tryMatchDecosAfterLoad() {
+  if (!Object.keys(importedDecoSprites).length) return;
+  decos.forEach((deco, i) => {
+    const spriteName = deco.name.replace(/\.[^.]+$/, '');
+    const positions  = importedDecoSprites[spriteName];
+    if (!positions) return;
+    for (const { r, c, rot } of positions) {
+      if (inBounds(c, r) && decoGrid[r][c]?.idx === -1 && decoGrid[r][c]?.spriteName === spriteName) {
+        decoGrid[r][c] = { idx: i, rot };
+      }
+    }
+    delete importedDecoSprites[spriteName];
+  });
+  render();
+}
 
 // ═══════════════════════════════════════════════
 //  INIT
