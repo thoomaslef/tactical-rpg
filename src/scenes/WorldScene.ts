@@ -55,6 +55,7 @@ export class WorldScene extends Phaser.Scene {
   private _monsterTooltip: HTMLDivElement | null = null;
   private statsBtn!: Phaser.GameObjects.Text;
   private uiXpGoldText!: Phaser.GameObjects.Text;
+  private posText!: Phaser.GameObjects.Text;
   private messageText: Phaser.GameObjects.Text | null = null;
   private isDialogueOpen = false;
   private isChestOpen = false;
@@ -1018,6 +1019,13 @@ export class WorldScene extends Phaser.Scene {
       bestBtn.on('pointerout',  () => bestBtn.setColor('#34d399'));
       bestBtn.on('pointerdown', () => this.openBestiary());
     }
+
+    this.posText = this.add.text(
+      this.scale.width - 8,
+      this.scale.height - 8,
+      `📍 (${this.playerX}, ${this.playerY})`,
+      { fontSize: '12px', color: '#8b93a7', backgroundColor: '#0e132088', padding: { x: 6, y: 3 } }
+    ).setOrigin(1, 1).setDepth(10002);
   }
 
   private openBestiary() {
@@ -1769,6 +1777,7 @@ export class WorldScene extends Phaser.Scene {
       const [nx, ny] = path[i++];
       this.playerX = nx;
       this.playerY = ny;
+      this.posText?.setText(`📍 (${nx}, ${ny})`);
       const { x: cx, y: cy } = this.tileCenter(nx, ny);
       this.playerCont.setDepth(1000 + cy);
       this.tweens.add({
