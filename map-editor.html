@@ -211,6 +211,35 @@ button.active { outline: 2px solid #38bdf8; outline-offset: 1px; }
 ::-webkit-scrollbar-track { background: #0f172a; }
 ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
 
+/* ── Palette color section ──────────────────────────────────── */
+.palette-section-title {
+  font-size: 9px; color: #4b5563; text-transform: uppercase;
+  letter-spacing: 1.5px; padding: 6px 5px 3px; font-weight: 700;
+}
+.palette-color-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 4px; padding: 2px 5px 6px;
+}
+.palette-color-swatch {
+  width: 100%; aspect-ratio: 1; border-radius: 5px;
+  cursor: pointer; border: 2px solid transparent;
+  transition: border-color .12s, transform .1s;
+}
+.palette-color-swatch:hover  { transform: scale(1.12); }
+.palette-color-swatch.active { border-color: #38bdf8; }
+.palette-color-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 3px 5px 6px;
+}
+.palette-color-row label { font-size: 10px; color: #6b7280; }
+.palette-color-row input[type="color"] {
+  width: 28px; height: 22px; border: 1px solid #334155;
+  border-radius: 4px; cursor: pointer; padding: 1px;
+  background: #1e293b;
+}
+.palette-sep {
+  height: 1px; background: #1e2738; margin: 2px 5px 4px;
+}
 /* ── Import notice ──────────────────────────────────────────── */
 #import-notice {
   position: fixed; top: 56px; left: 50%; transform: translateX(-50%);
@@ -318,8 +347,66 @@ let decoGrid = [];
 // Calque sorties : exitGrid[r][c] = { targetMap, targetX, targetY } | null
 let exitGrid = [];
 
-let tiles  = [];    // { name, img, src }
+let tiles  = [];    // { name, img, src, isColor? }
 let decos  = [];    // { name, img, src }
+
+// ── Dalles de couleur prédéfinies ──
+const COLOR_TILES = [
+  { label: 'Herbe',        color: '#5a8a3c' },
+  { label: 'Herbe foncée', color: '#3d6b28' },
+  { label: 'Terre',        color: '#8b6340' },
+  { label: 'Sable',        color: '#c9a96e' },
+  { label: 'Pierre',       color: '#7a7a8a' },
+  { label: 'Pavé',         color: '#5a5a6e' },
+  { label: 'Eau',          color: '#2e6b9e' },
+  { label: 'Eau foncée',   color: '#1a4060' },
+  { label: 'Neige',        color: '#d8e8f0' },
+  { label: 'Bois',         color: '#7b5230' },
+  { label: 'Lave',         color: '#c0392b' },
+  { label: 'Marais',       color: '#4a6340' },
+  { label: 'Noir',         color: '#1a1a1a' },
+  { label: 'Blanc',        color: '#f0f0f0' },
+  { label: 'Or',           color: '#c9a020' },
+  { label: 'Violet',       color: '#5e3a7a' },
+];
+
+function makeColorTile(color, label) {
+  const W = 128, H = 64;
+  const off = document.createElement('canvas');
+  off.width = W; off.height = H;
+  const oc = off.getContext('2d');
+  // Losange isométrique plein
+  oc.fillStyle = color;
+  oc.beginPath();
+  oc.moveTo(W / 2, 0);
+  oc.lineTo(W, H / 2);
+  oc.lineTo(W / 2, H);
+  oc.lineTo(0, H / 2);
+  oc.closePath();
+  oc.fill();
+  // Légère variation sur les faces pour donner du relief
+  const lighter = color + '55';
+  oc.fillStyle = lighter;
+  oc.beginPath();
+  oc.moveTo(W / 2, 0);
+  oc.lineTo(W, H / 2);
+  oc.lineTo(W / 2, H / 2);
+  oc.closePath();
+  oc.fill();
+  const src = off.toDataURL('image/png');
+  const img = new Image();
+  img.src = src;
+  return { name: `__color_${color}`, label, color, img, src, previewSrc: src, isColor: true };
+}
+
+let numColorTiles = 0; // nombre de dalles couleur en tête de tiles[]
+
+function initColorTiles() {
+  COLOR_TILES.forEach(({ label, color }) => {
+    tiles.push(makeColorTile(color, label));
+  });
+  numColorTiles = COLOR_TILES.length;
+}
 
 let mode         = 'tiles';  // 'tiles' | 'decos' | 'exits'
 let selectedIdx  = -1;
@@ -505,36 +592,104 @@ function refreshPalette() {
   pList.style.display = 'flex';
   pExit.style.display = 'none';
 
-  const items = mode === 'tiles' ? tiles : decos;
-  count.textContent = `${items.length} élément${items.length !== 1 ? 's' : ''}`;
-  pList.innerHTML = '';
+  if (mode === 'tiles') {
+    // ── Section dalles de couleur ──
+    const secTitle = document.createElement('div');
+    secTitle.className = 'palette-section-title';
+    secTitle.textContent = '🎨 Dalles de couleur';
+    pList.appendChild(secTitle);
 
-  items.forEach((t, i) => {
-    const item = document.createElement('div');
-    item.className = 'palette-item' + (selectedIdx === i ? ' active' : '');
+    const grid = document.createElement('div');
+    grid.className = 'palette-color-grid';
+    tiles.forEach((t, i) => {
+      if (!t.isColor) return;
+      const sw = document.createElement('div');
+      sw.className = 'palette-color-swatch' + (selectedIdx === i ? ' active' : '');
+      sw.style.background = t.color;
+      sw.title = t.label;
+      sw.addEventListener('click', () => {
+        selectedIdx = i; eraserMode = false;
+        document.getElementById('btn-eraser').classList.remove('active');
+        refreshPalette();
+      });
+      grid.appendChild(sw);
+    });
+    pList.appendChild(grid);
 
-    const img = document.createElement('img');
-    img.className = 'palette-thumb';
-    img.src = t.previewSrc || t.src;
-
-    const info = document.createElement('div');
-    info.style.minWidth = 0;
-    const lbl = document.createElement('div');
-    lbl.className = 'palette-label';
-    let name = t.name.replace(/\.[^.]+$/, '');
-    if (name.length > 22) name = name.slice(0, 20) + '…';
-    lbl.textContent = name;
-    info.appendChild(lbl);
-
-    item.append(img, info);
-    item.addEventListener('click', () => {
-      selectedIdx = i;
+    // ── Couleur personnalisée ──
+    const colorRow = document.createElement('div');
+    colorRow.className = 'palette-color-row';
+    const colorLbl = document.createElement('label');
+    colorLbl.textContent = 'Custom :';
+    const colorPicker = document.createElement('input');
+    colorPicker.type = 'color'; colorPicker.value = '#ff6600';
+    const addBtn = document.createElement('button');
+    addBtn.textContent = '+ Ajouter';
+    addBtn.style.cssText = 'font-size:10px;padding:3px 7px;flex:1;';
+    addBtn.addEventListener('click', () => {
+      const t = makeColorTile(colorPicker.value, colorPicker.value);
+      tiles.push(t);
+      selectedIdx = tiles.length - 1;
       eraserMode = false;
-      document.getElementById('btn-eraser').classList.remove('active');
       refreshPalette();
     });
-    pList.appendChild(item);
-  });
+    colorRow.append(colorLbl, colorPicker, addBtn);
+    pList.appendChild(colorRow);
+
+    // ── Séparateur + tuiles image ──
+    const userTiles = tiles.filter(t => !t.isColor);
+    if (userTiles.length > 0) {
+      const sep = document.createElement('div'); sep.className = 'palette-sep'; pList.appendChild(sep);
+      const secTitle2 = document.createElement('div');
+      secTitle2.className = 'palette-section-title';
+      secTitle2.textContent = '🖼️ Tuiles image';
+      pList.appendChild(secTitle2);
+    }
+
+    tiles.forEach((t, i) => {
+      if (t.isColor) return;
+      const item = document.createElement('div');
+      item.className = 'palette-item' + (selectedIdx === i ? ' active' : '');
+      const img = document.createElement('img');
+      img.className = 'palette-thumb'; img.src = t.previewSrc || t.src;
+      const info = document.createElement('div'); info.style.minWidth = 0;
+      const lbl = document.createElement('div'); lbl.className = 'palette-label';
+      let name = t.name.replace(/\.[^.]+$/, '');
+      if (name.length > 22) name = name.slice(0, 20) + '…';
+      lbl.textContent = name; info.appendChild(lbl);
+      item.append(img, info);
+      item.addEventListener('click', () => {
+        selectedIdx = i; eraserMode = false;
+        document.getElementById('btn-eraser').classList.remove('active');
+        refreshPalette();
+      });
+      pList.appendChild(item);
+    });
+
+    count.textContent = `${tiles.filter(t=>!t.isColor).length} image(s) · ${tiles.filter(t=>t.isColor).length} couleur(s)`;
+  } else {
+    // ── Mode décos (inchangé) ──
+    const items = decos;
+    count.textContent = `${items.length} élément${items.length !== 1 ? 's' : ''}`;
+    items.forEach((t, i) => {
+      const item = document.createElement('div');
+      item.className = 'palette-item' + (selectedIdx === i ? ' active' : '');
+      const img = document.createElement('img');
+      img.className = 'palette-thumb'; img.src = t.previewSrc || t.src;
+      const info = document.createElement('div'); info.style.minWidth = 0;
+      const lbl = document.createElement('div'); lbl.className = 'palette-label';
+      let name = t.name.replace(/\.[^.]+$/, '');
+      if (name.length > 22) name = name.slice(0, 20) + '…';
+      lbl.textContent = name; info.appendChild(lbl);
+      item.append(img, info);
+      item.addEventListener('click', () => {
+        selectedIdx = i; eraserMode = false;
+        document.getElementById('btn-eraser').classList.remove('active');
+        refreshPalette();
+      });
+      pList.appendChild(item);
+    });
+  }
 
   document.getElementById('rot-group').style.opacity = mode === 'decos' ? '1' : '0.35';
 }
@@ -1008,6 +1163,7 @@ function importMap(data) {
   tiles = []; decos = []; selectedIdx = -1;
   importedTileManifest = {};
   importedDecoSprites  = {};
+  initColorTiles();  // remet les dalles couleur en premier
   initGrids();
   resizeCanvas();
 
@@ -1021,7 +1177,8 @@ function importMap(data) {
     }
   }
   if (data.tileManifest) {
-    importedTileManifest = data.tileManifest; // { "0": "file.jpeg", ... }
+    importedTileManifest = data.tileManifest;
+    restoreColorTilesFromManifest(data.tileManifest);
   }
 
   // ── Sorties ──
@@ -1107,11 +1264,9 @@ document.getElementById('file-import').addEventListener('change', e => {
 // ── Quand on charge des tuiles après un import : auto-match par nom ──
 function tryMatchTilesAfterLoad() {
   if (!Object.keys(importedTileManifest).length) return;
-  // Reconstruit le mapping index→tile selon le nom de fichier
   const byName = {};
   tiles.forEach((t, i) => { byName[t.name] = i; });
   let matched = false;
-  // Remet à jour tileGrid avec les vrais index
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
       const old = tileGrid[r][c];
@@ -1124,6 +1279,33 @@ function tryMatchTilesAfterLoad() {
     }
   }
   if (matched) render();
+}
+
+// ── Restaure les dalles couleur depuis un tileManifest importé ──
+function restoreColorTilesFromManifest(manifest) {
+  // Pour chaque entrée __color_#RRGGBB : trouve ou crée la dalle couleur
+  const byName = {};
+  tiles.forEach((t, i) => { byName[t.name] = i; });
+
+  for (const [idx, name] of Object.entries(manifest)) {
+    if (!name.startsWith('__color_')) continue;
+    const color = name.replace('__color_', '');
+    if (byName[name] === undefined) {
+      // Crée la dalle couleur si elle n'existe pas encore
+      const label = color;
+      const t = makeColorTile(color, label);
+      tiles.push(t);
+      byName[name] = tiles.length - 1;
+    }
+    // Remplace les index dans la grille
+    const targetIdx = byName[name];
+    const srcIdx = parseInt(idx);
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        if (tileGrid[r][c] === srcIdx) tileGrid[r][c] = targetIdx;
+      }
+    }
+  }
 }
 
 // ── Quand on charge des décos après un import : auto-match par nom de sprite ──
@@ -1146,6 +1328,7 @@ function tryMatchDecosAfterLoad() {
 // ═══════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════
+initColorTiles();
 initGrids();
 resizeCanvas();
 render();
