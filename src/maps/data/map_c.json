@@ -7,6 +7,7 @@
     0,
     0
   ],
+  "tilesPath": "Assets/tiles/",
   "tileManifest": {
     "33": "isometric-2-1-game-ground-tile-stone-cob_OBKfiHesUv2KZN7u6SXBpg_k6EKObmQSYOmsZspro7NYQ_cover.jpeg"
   },
