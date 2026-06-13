@@ -99,7 +99,7 @@ button.active { outline: 2px solid #38bdf8; outline-offset: 1px; }
 
 /* ── Palette ────────────────────────────────────────────────── */
 #palette {
-  width: 160px; flex-shrink: 0;
+  width: 200px; flex-shrink: 0;
   background: #0f172a;
   border-right: 1px solid #1e2d45;
   display: flex; flex-direction: column;
@@ -139,6 +139,46 @@ button.active { outline: 2px solid #38bdf8; outline-offset: 1px; }
 .palette-item .rot-ring {
   font-size: 9px; color: #38bdf8;
   margin-top: 2px;
+}
+
+/* ── Exit palette ───────────────────────────────────────────── */
+#exit-palette {
+  flex: 1; overflow-y: auto; padding: 10px 8px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.exit-field label {
+  display: block; font-size: 10px; color: #6b7280;
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;
+}
+.exit-field input {
+  width: 100%; background: #1e293b; border: 1px solid #334155;
+  color: #e2e8f0; padding: 5px 8px; border-radius: 5px; font-size: 12px;
+}
+.exit-field input:focus { outline: none; border-color: #38bdf8; }
+.exit-hint {
+  font-size: 10px; color: #4b5563; line-height: 1.5;
+  padding: 6px 8px; background: #0b0f1a;
+  border-radius: 6px; border: 1px solid #1e2738;
+}
+.exit-separator {
+  border: none; border-top: 1px solid #1e2738; margin: 2px 0;
+}
+.exit-list-title {
+  font-size: 10px; color: #6b7280; text-transform: uppercase;
+  letter-spacing: 1px; font-weight: 700;
+}
+.exit-list-item {
+  background: #0b0f1a; border: 1px solid #1e2738;
+  border-radius: 6px; padding: 6px 8px;
+  font-size: 10px; color: #94a3b8; line-height: 1.6;
+  cursor: pointer; transition: border-color .12s;
+}
+.exit-list-item:hover { border-color: #f97316; }
+.exit-list-item .exit-coords { color: #f97316; font-weight: 700; }
+.exit-list-item .exit-target { color: #38bdf8; }
+.exit-list-item .exit-remove {
+  float: right; color: #ef4444; cursor: pointer;
+  font-size: 12px; line-height: 1; margin-left: 6px;
 }
 
 /* ── Canvas area ────────────────────────────────────────────── */
@@ -219,9 +259,11 @@ button.active { outline: 2px solid #38bdf8; outline-offset: 1px; }
     <div class="mode-bar">
       <div class="mode-tab active" id="tab-tiles">🧱 Tuiles</div>
       <div class="mode-tab"       id="tab-decos">🌲 Décos</div>
+      <div class="mode-tab"       id="tab-exits">🚪 Sorties</div>
     </div>
     <div id="palette-count">0 éléments</div>
     <div id="palette-list"></div>
+    <div id="exit-palette" style="display:none"></div>
   </div>
 
   <div id="canvas-wrap">
@@ -250,15 +292,20 @@ let zoom = 1.0;
 let tileGrid = [];
 // Calque décorations : decoGrid[r][c] = { idx, rot } | null
 let decoGrid = [];
+// Calque sorties : exitGrid[r][c] = { targetMap, targetX, targetY } | null
+let exitGrid = [];
 
 let tiles  = [];    // { name, img, src }
 let decos  = [];    // { name, img, src }
 
-let mode         = 'tiles';  // 'tiles' | 'decos'
+let mode         = 'tiles';  // 'tiles' | 'decos' | 'exits'
 let selectedIdx  = -1;
 let currentRot   = 0;        // 0 | 90 | 180 | 270
 let eraserMode   = false;
 let isPainting   = false;
+
+// Config exit active
+let exitConfig = { targetMap: '', targetX: 0, targetY: 0 };
 
 const canvas = document.getElementById('map-canvas');
 const ctx    = canvas.getContext('2d');
@@ -277,13 +324,16 @@ const oy  = () => PAD + Math.round(ts() * 0.05);
 //  GRID
 // ═══════════════════════════════════════════════
 function initGrids(preserve = false) {
-  const oldT = tileGrid, oldD = decoGrid;
+  const oldT = tileGrid, oldD = decoGrid, oldE = exitGrid;
   tileGrid = Array.from({ length: ROWS }, (_, r) =>
     Array.from({ length: COLS }, (_, c) =>
       preserve && oldT[r] ? (oldT[r][c] ?? -1) : -1));
   decoGrid = Array.from({ length: ROWS }, (_, r) =>
     Array.from({ length: COLS }, (_, c) =>
       preserve && oldD[r] ? (oldD[r][c] ?? null) : null));
+  exitGrid = Array.from({ length: ROWS }, (_, r) =>
+    Array.from({ length: COLS }, (_, c) =>
+      preserve && oldE[r] ? (oldE[r][c] ?? null) : null));
 }
 
 // ═══════════════════════════════════════════════
@@ -298,12 +348,6 @@ function s2g(sx, sy) {
   return { col: Math.floor((u + v) / 2 + 0.5), row: Math.floor((v - u) / 2 + 0.5) };
 }
 function inBounds(c, r) { return c >= 0 && c < COLS && r >= 0 && r < ROWS; }
-// Centre isométrique d'une case :
-//   x = g2s.x      (sommet haut du losange = centre horizontal)
-//   y = g2s.y + ys (milieu vertical du losange)
-// Correspond exactement à tileCenter() côté Phaser :
-//   x = iso.x + tileW/2   →  _originX + (gx-gy)*tileW/2 + tileW/2 = g2s.x
-//   y = iso.y + tileH/2   →  _originY + (gx+gy)*tileH/2 + tileH/2 = g2s.y + ys
 function tileCenterX(col, row) { return g2s(col, row).x; }
 function tileCenterY(col, row) { return g2s(col, row).y + ys(); }
 
@@ -329,10 +373,8 @@ function render() {
       const ti = tileGrid[r][c];
 
       if (ti >= 0 && tiles[ti]) {
-        // Tuile image — même origine que le jeu : (iso.x, iso.y) = (x - T/2, y)
         ctx.drawImage(tiles[ti].img, x - T / 2, y, T, T);
       } else {
-        // Case vide
         ctx.save();
         ctx.setLineDash([3, 4]);
         ctx.strokeStyle = 'rgba(200,213,224,0.35)';
@@ -347,7 +389,7 @@ function render() {
         ctx.restore();
       }
 
-      // ── Déco sur ce calque ──
+      // ── Déco ──
       const d = decoGrid[r][c];
       if (d !== null && decos[d.idx]) {
         const cx = tileCenterX(c, r);
@@ -355,16 +397,40 @@ function render() {
         const ds = T * 1.8;
         drawSprite(decos[d.idx].img, cx, cy, ds, d.rot);
       }
+
+      // ── Sortie ──
+      const ex = exitGrid[r][c];
+      if (ex !== null) {
+        ctx.save();
+        // Overlay orange semi-transparent
+        ctx.globalAlpha = 0.50;
+        ctx.fillStyle = '#f97316';
+        ctx.beginPath();
+        ctx.moveTo(x,       y);
+        ctx.lineTo(x + X,   y + Y);
+        ctx.lineTo(x,       y + Y * 2);
+        ctx.lineTo(x - X,   y + Y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        // Contour
+        ctx.strokeStyle = '#fb923c';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        // Icône porte
+        const fs = Math.max(8, Math.round(Y * 1.6));
+        ctx.font = `${fs}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🚪', x, y + Y);
+        ctx.restore();
+      }
     }
   }
 }
 
 function drawSprite(img, cx, cy, ds, deg) {
-  // Phaser origin(0.5, 0.82) : le "pied" du sprite est ancré au centre de la tuile
-  // → Le sprite est dessiné de sorte que son point (0.5w, 0.82h) soit en (cx, cy)
-  // Centre visuel de l'image (pour la rotation) :
-  const pivotY = cy - ds * 0.82 + ds * 0.5;  // cy - 0.32*ds
-
+  const pivotY = cy - ds * 0.82 + ds * 0.5;
   ctx.save();
   ctx.translate(cx, pivotY);
   if (deg) ctx.rotate(deg * Math.PI / 180);
@@ -376,11 +442,24 @@ function drawSprite(img, cx, cy, ds, deg) {
 //  PALETTE
 // ═══════════════════════════════════════════════
 function refreshPalette() {
-  const list  = document.getElementById('palette-list');
-  const count = document.getElementById('palette-count');
+  const pList  = document.getElementById('palette-list');
+  const pExit  = document.getElementById('exit-palette');
+  const count  = document.getElementById('palette-count');
+
+  if (mode === 'exits') {
+    pList.style.display = 'none';
+    pExit.style.display = 'flex';
+    count.textContent = `${countExits()} sortie${countExits() !== 1 ? 's' : ''} placée${countExits() !== 1 ? 's' : ''}`;
+    renderExitPalette(pExit);
+    return;
+  }
+
+  pList.style.display = 'flex';
+  pExit.style.display = 'none';
+
   const items = mode === 'tiles' ? tiles : decos;
   count.textContent = `${items.length} élément${items.length !== 1 ? 's' : ''}`;
-  list.innerHTML = '';
+  pList.innerHTML = '';
 
   items.forEach((t, i) => {
     const item = document.createElement('div');
@@ -406,29 +485,130 @@ function refreshPalette() {
       document.getElementById('btn-eraser').classList.remove('active');
       refreshPalette();
     });
-    list.appendChild(item);
+    pList.appendChild(item);
   });
 
-  // Rotation UI only relevant in deco mode
   document.getElementById('rot-group').style.opacity = mode === 'decos' ? '1' : '0.35';
+}
+
+function countExits() {
+  let n = 0;
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (exitGrid[r][c]) n++;
+  return n;
+}
+
+function renderExitPalette(container) {
+  container.innerHTML = '';
+
+  // ── Config form ──
+  const formTitle = document.createElement('div');
+  formTitle.className = 'exit-list-title';
+  formTitle.textContent = '⚙️  Configuration de la sortie';
+  container.appendChild(formTitle);
+
+  function field(labelText, inputId, inputType, value, placeholder) {
+    const wrap = document.createElement('div');
+    wrap.className = 'exit-field';
+    const lbl = document.createElement('label');
+    lbl.textContent = labelText;
+    lbl.htmlFor = inputId;
+    const inp = document.createElement('input');
+    inp.id = inputId; inp.type = inputType; inp.value = value; inp.placeholder = placeholder || '';
+    wrap.append(lbl, inp);
+    return { wrap, inp };
+  }
+
+  const fMap = field('Map cible (ID)', 'ec-map', 'text', exitConfig.targetMap, 'ex: map_s');
+  fMap.inp.addEventListener('input', e => { exitConfig.targetMap = e.target.value.trim(); });
+  container.appendChild(fMap.wrap);
+
+  const fX = field('Position X (cible)', 'ec-x', 'number', exitConfig.targetX, '10');
+  fX.inp.style.width = '100%';
+  fX.inp.addEventListener('input', e => { exitConfig.targetX = parseInt(e.target.value) || 0; });
+  container.appendChild(fX.wrap);
+
+  const fY = field('Position Y (cible)', 'ec-y', 'number', exitConfig.targetY, '7');
+  fY.inp.style.width = '100%';
+  fY.inp.addEventListener('input', e => { exitConfig.targetY = parseInt(e.target.value) || 0; });
+  container.appendChild(fY.wrap);
+
+  const hint = document.createElement('div');
+  hint.className = 'exit-hint';
+  hint.textContent = '🖱️ Clic gauche : poser une sortie  ·  Clic droit : supprimer';
+  container.appendChild(hint);
+
+  const sep = document.createElement('hr');
+  sep.className = 'exit-separator';
+  container.appendChild(sep);
+
+  // ── Liste des sorties placées ──
+  const listTitle = document.createElement('div');
+  listTitle.className = 'exit-list-title';
+  listTitle.textContent = '📋  Sorties placées';
+  container.appendChild(listTitle);
+
+  let hasAny = false;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const ex = exitGrid[r][c];
+      if (!ex) continue;
+      hasAny = true;
+
+      const item = document.createElement('div');
+      item.className = 'exit-list-item';
+
+      const removeBtn = document.createElement('span');
+      removeBtn.className = 'exit-remove';
+      removeBtn.textContent = '✕';
+      removeBtn.title = 'Supprimer';
+      removeBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        exitGrid[r][c] = null;
+        render();
+        refreshPalette();
+      });
+
+      item.innerHTML =
+        `<span class="exit-coords">(${c}, ${r})</span> → ` +
+        `<span class="exit-target">${ex.targetMap || '?'}</span> ` +
+        `<span style="color:#6b7280">@ (${ex.targetX}, ${ex.targetY})</span>`;
+      item.appendChild(removeBtn);
+
+      // Clic pour pré-remplir la config avec les valeurs de cette sortie
+      item.addEventListener('click', () => {
+        exitConfig = { targetMap: ex.targetMap, targetX: ex.targetX, targetY: ex.targetY };
+        refreshPalette();
+      });
+
+      container.appendChild(item);
+    }
+  }
+
+  if (!hasAny) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'font-size:10px;color:#374151;text-align:center;padding:12px 0;';
+    empty.textContent = 'Aucune sortie placée';
+    container.appendChild(empty);
+  }
 }
 
 // ═══════════════════════════════════════════════
 //  MODE SWITCH
 // ═══════════════════════════════════════════════
-document.getElementById('tab-tiles').addEventListener('click', () => {
-  mode = 'tiles'; selectedIdx = -1; eraserMode = false;
+function switchMode(newMode) {
+  mode = newMode;
+  if (mode !== 'exits') { selectedIdx = -1; eraserMode = false; }
   document.getElementById('btn-eraser').classList.remove('active');
-  document.getElementById('tab-tiles').classList.add('active');
-  document.getElementById('tab-decos').classList.remove('active');
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`tab-${mode}`).classList.add('active');
   refreshPalette();
-});
-document.getElementById('tab-decos').addEventListener('click', () => {
-  mode = 'decos'; selectedIdx = -1; eraserMode = false;
-  document.getElementById('btn-eraser').classList.remove('active');
-  document.getElementById('tab-decos').classList.add('active');
-  document.getElementById('tab-tiles').classList.remove('active');
-  refreshPalette();
+}
+
+document.getElementById('tab-tiles').addEventListener('click', () => switchMode('tiles'));
+document.getElementById('tab-decos').addEventListener('click', () => switchMode('decos'));
+document.getElementById('tab-exits').addEventListener('click', () => {
+  eraserMode = false;
+  switchMode('exits');
 });
 
 // ═══════════════════════════════════════════════
@@ -442,7 +622,6 @@ document.querySelectorAll('.rot-btn').forEach(btn => {
   });
 });
 
-// Raccourci R = rotation +90°
 window.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
   if (e.key === 'r' || e.key === 'R') {
@@ -469,6 +648,20 @@ function paintAt(e) {
   const { col, row } = s2g(sx, sy);
   if (!inBounds(col, row)) return;
 
+  // ── Mode sortie ──
+  if (mode === 'exits') {
+    if (eraserMode) {
+      exitGrid[row][col] = null;
+    } else {
+      if (!exitConfig.targetMap) { alert('Renseigne la Map cible dans la palette Sorties.'); return; }
+      exitGrid[row][col] = { ...exitConfig };
+    }
+    render();
+    refreshPalette();
+    return;
+  }
+
+  // ── Mode tuiles / décos ──
   if (eraserMode) {
     if (mode === 'tiles') tileGrid[row][col] = -1;
     else decoGrid[row][col] = null;
@@ -491,15 +684,20 @@ function paintAt(e) {
   render();
 }
 
-// Clic droit = effacer déco
+// Clic droit = effacer
 canvas.addEventListener('contextmenu', e => {
   e.preventDefault();
   const { sx, sy } = getCanvasPos(e);
   const { col, row } = s2g(sx, sy);
   if (!inBounds(col, row)) return;
-  if (mode === 'decos') decoGrid[row][col] = null;
-  else tileGrid[row][col] = -1;
-  render();
+  if (mode === 'exits') {
+    exitGrid[row][col] = null;
+    render(); refreshPalette();
+  } else if (mode === 'decos') {
+    decoGrid[row][col] = null; render();
+  } else {
+    tileGrid[row][col] = -1; render();
+  }
 });
 
 canvas.addEventListener('mousedown', e => {
@@ -509,9 +707,11 @@ canvas.addEventListener('mousemove', e => {
   const { sx, sy } = getCanvasPos(e);
   const { col, row } = s2g(sx, sy);
   const ok = inBounds(col, row);
-  document.getElementById('status').textContent =
-    ok ? `Col: ${col}  ·  Ligne: ${row}${mode === 'decos' ? `  ·  Rot: ${currentRot}°` : ''}` : 'Col: —  ·  Ligne: —';
-  if (isPainting && e.button === 0) paintAt(e);
+  let info = ok ? `Col: ${col}  ·  Ligne: ${row}` : 'Col: —  ·  Ligne: —';
+  if (ok && mode === 'decos') info += `  ·  Rot: ${currentRot}°`;
+  if (ok && mode === 'exits' && exitGrid[row][col]) info += `  ·  → ${exitGrid[row][col].targetMap}`;
+  document.getElementById('status').textContent = info;
+  if (isPainting && e.button === 0 && mode !== 'exits') paintAt(e);
 });
 window.addEventListener('mouseup', () => { isPainting = false; });
 
@@ -585,13 +785,11 @@ function loadFiles(files, targetArray) {
 }
 
 document.getElementById('btn-load-tiles').addEventListener('click', () => {
-  mode = 'tiles';
-  document.getElementById('tab-tiles').click();
+  if (mode !== 'tiles') switchMode('tiles');
   document.getElementById('file-tiles').click();
 });
 document.getElementById('btn-load-decos').addEventListener('click', () => {
-  mode = 'decos';
-  document.getElementById('tab-decos').click();
+  if (mode !== 'decos') switchMode('decos');
   document.getElementById('file-decos').click();
 });
 document.getElementById('file-tiles').addEventListener('change', e => {
@@ -601,7 +799,7 @@ document.getElementById('file-decos').addEventListener('change', e => {
   loadFiles(e.target.files, decos); e.target.value = '';
 });
 
-// Drag & drop (charge selon le mode actif)
+// Drag & drop
 wrap.addEventListener('dragenter', e => { e.preventDefault(); wrap.classList.add('drag-over'); });
 wrap.addEventListener('dragover',  e => { e.preventDefault(); wrap.classList.add('drag-over'); });
 wrap.addEventListener('dragleave', e => { if (!wrap.contains(e.relatedTarget)) wrap.classList.remove('drag-over'); });
@@ -630,6 +828,11 @@ document.getElementById('btn-fill').addEventListener('click', () => {
 });
 
 document.getElementById('btn-clear').addEventListener('click', () => {
+  if (mode === 'exits') {
+    if (!confirm('Supprimer toutes les sorties ?')) return;
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) exitGrid[r][c] = null;
+    render(); refreshPalette(); return;
+  }
   const what = mode === 'tiles' ? 'les tuiles' : 'les décorations';
   if (!confirm(`Vider ${what} ?`)) return;
   if (mode === 'tiles')
@@ -684,7 +887,6 @@ document.getElementById('btn-export').addEventListener('click', () => {
       const d = decoGrid[r][c];
       if (d !== null && decos[d.idx]) {
         const name = decos[d.idx].name;
-        // Nom sans extension = SpriteId
         const spriteId = name.replace(/\.[^.]+$/, '');
         const entry = {
           id: `d_${mapId}_${dIdx++}`,
@@ -699,6 +901,22 @@ document.getElementById('btn-export').addEventListener('click', () => {
     }
   }
 
+  // ── Sorties ──
+  const exits = [];
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const ex = exitGrid[r][c];
+      if (ex) {
+        exits.push({
+          from: { x: c, y: r },
+          targetMap: ex.targetMap,
+          targetX: ex.targetX,
+          targetY: ex.targetY,
+        });
+      }
+    }
+  }
+
   const data = {
     id: mapId,
     width: COLS,
@@ -707,13 +925,12 @@ document.getElementById('btn-export').addEventListener('click', () => {
     coords: [0, 0],
     tileManifest: Object.keys(tileManifest).length ? tileManifest : undefined,
     tiles: tileGrid.map(row => [...row]),
-    exits:  [],
+    exits,
     spawns: [],
     chests: [],
     npcs:   [],
     decorations,
   };
-  // Supprimer tileManifest si vide
   if (!data.tileManifest) delete data.tileManifest;
 
   const json = JSON.stringify(data, null, 2);
@@ -723,7 +940,7 @@ document.getElementById('btn-export').addEventListener('click', () => {
   a.download = `${mapId}.json`; a.click();
   URL.revokeObjectURL(url);
 
-  console.log(`✅ Export "${mapId}.json" — ${COLS}×${ROWS}, ${usedTiles.size} tuile(s), ${decorations.length} déco(s)`);
+  console.log(`✅ Export "${mapId}.json" — ${COLS}×${ROWS}, ${usedTiles.size} tuile(s), ${decorations.length} déco(s), ${exits.length} sortie(s)`);
 });
 
 // ═══════════════════════════════════════════════
