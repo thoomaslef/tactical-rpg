@@ -17,6 +17,14 @@ export const MONSTER_DROPS: MonsterDef[] = [
     drops: [
       { itemId: 'rat_fur',             chance: 1.00 },
       { itemId: 'clef_antre_razmotek', chance: 0.10 },
+      { itemId: 'casque_fer',          chance: 0.10 },
+      { itemId: 'torse_fer',           chance: 0.10 },
+      { itemId: 'jambieres_fer',       chance: 0.10 },
+      { itemId: 'bottes_fer',          chance: 0.10 },
+      { itemId: 'bouclier_fer',        chance: 0.10 },
+      { itemId: 'anneau_fer',          chance: 0.10 },
+      { itemId: 'amulette_fer',        chance: 0.10 },
+      { itemId: 'cape_fer',            chance: 0.10 },
     ],
   },
   {
@@ -59,14 +67,4 @@ export const MONSTER_DROPS: MonsterDef[] = [
   },
 ];
 
-/** Items droppables par n'importe quel monstre non-boss (panoplie de Fer). */
-export const GENERIC_DROPS: DropEntry[] = [
-  { itemId: 'casque_fer',    chance: 0.10 },
-  { itemId: 'torse_fer',     chance: 0.10 },
-  { itemId: 'jambieres_fer', chance: 0.10 },
-  { itemId: 'bottes_fer',    chance: 0.10 },
-  { itemId: 'bouclier_fer',  chance: 0.10 },
-  { itemId: 'anneau_fer',    chance: 0.10 },
-  { itemId: 'amulette_fer',  chance: 0.10 },
-  { itemId: 'cape_fer',      chance: 0.10 },
-];
+export const GENERIC_DROPS: DropEntry[] = [];

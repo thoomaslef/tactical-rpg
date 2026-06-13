@@ -1316,19 +1316,21 @@ export class CombatScene extends Phaser.Scene {
 
   /** Tire les drops pour un combat contre des non-boss. */
   private _rollDrops(): InventoryEntry[] {
-    const PANOPLIE_ITEMS = [
-      'casque_fer', 'torse_fer', 'jambieres_fer', 'bottes_fer',
-      'bouclier_fer', 'anneau_fer', 'amulette_fer', 'cape_fer',
-    ];
     const drops: InventoryEntry[] = [];
-
-    // Panoplie : 10% fixe par item
-    for (const id of PANOPLIE_ITEMS) {
-      if (Math.random() < 0.10) drops.push({ id, qty: 1 });
-    }
 
     // Clef de l'Antre : 10% fixe par rat tué (indépendant de la Chance)
     const ratCount = this.monsters.filter(m => m.name === 'Rat').length;
+
+    // Panoplie de Fer : uniquement si des rats sont présents
+    if (ratCount > 0) {
+      const PANOPLIE_ITEMS = [
+        'casque_fer', 'torse_fer', 'jambieres_fer', 'bottes_fer',
+        'bouclier_fer', 'anneau_fer', 'amulette_fer', 'cape_fer',
+      ];
+      for (const id of PANOPLIE_ITEMS) {
+        if (Math.random() < 0.10) drops.push({ id, qty: 1 });
+      }
+    }
     if (ratCount > 0) {
       for (let i = 0; i < ratCount; i++) {
         if (Math.random() < 0.10) {

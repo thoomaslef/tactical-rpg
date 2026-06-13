@@ -128,7 +128,7 @@ export class Bestiary {
 
     const allMonsters: (MonsterDef | { name: string; icon: string; isGeneric: true })[] = [
       ...MONSTER_DROPS,
-      { name: 'Tout monstre (non-boss)', icon: '🌍', isGeneric: true },
+      ...(GENERIC_DROPS.length > 0 ? [{ name: 'Tout monstre (non-boss)', icon: '🌍', isGeneric: true as const }] : []),
     ];
 
     for (const mon of allMonsters) {
