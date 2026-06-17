@@ -409,10 +409,10 @@
       "targetY": 12
     },
     {
-      "x": 11,
+      "x": 19,
       "y": 14,
       "targetMap": "map_foret",
-      "targetX": 11,
+      "targetX": 19,
       "targetY": 2
     }
   ],
@@ -439,5 +439,8 @@
   "chests": [],
   "npcs": [],
   "decorations": [],
-  "blockedCoordDirs": ["W"]
+  "blockedCoordDirs": [
+    "W",
+    "S"
+  ]
 }
