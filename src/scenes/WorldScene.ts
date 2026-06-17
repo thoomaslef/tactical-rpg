@@ -618,10 +618,16 @@ export class WorldScene extends Phaser.Scene {
 
     if (this.mapData.coords) {
       this._drawCoordExitStrips(mw, mh);
-      // Exits explicites hors-bordure uniquement (raccourcis, téléportations)
+      // Exits explicites pour tout exit qui n'est PAS exactement sur un coin de coord-strip
+      const coordCorners = [
+        { x: 1,      y: 1      }, // N
+        { x: mw - 2, y: mh - 2 }, // S
+        { x: mw - 2, y: 1      }, // E
+        { x: 1,      y: mh - 2 }, // W
+      ];
       for (const exit of this.mapData.exits) {
-        const onBorder = exit.x === 1 || exit.x === mw - 2 || exit.y === 1 || exit.y === mh - 2;
-        if (!onBorder) this._drawExplicitExitMarker(exit, mw, mh);
+        const isCorner = coordCorners.some(p => p.x === exit.x && p.y === exit.y);
+        if (!isCorner) this._drawExplicitExitMarker(exit, mw, mh);
       }
     } else {
       for (const exit of this.mapData.exits) {
