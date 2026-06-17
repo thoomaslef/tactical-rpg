@@ -399,24 +399,10 @@
   ],
   "exits": [
     {
-      "x": 9,
-      "y": 1,
-      "targetMap": "map_s",
-      "targetX": 0,
-      "targetY": 0
-    },
-    {
-      "x": 1,
-      "y": 6,
-      "targetMap": "map_foret_o",
-      "targetX": 0,
-      "targetY": 0
-    },
-    {
       "x": 8,
       "y": 1,
       "targetMap": "map_s",
-      "targetX": 8,
+      "targetX": 19,
       "targetY": 13
     },
     {
@@ -1390,5 +1376,9 @@
       "y": 15,
       "scale": 1
     }
+  ],
+  "blockedCoordDirs": [
+    "N",
+    "W"
   ]
 }
