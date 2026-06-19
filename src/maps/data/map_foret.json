@@ -413,7 +413,64 @@
       "targetY": 5
     }
   ],
-  "spawns": [],
+  "spawns": [
+    {
+      "id": "f_g1",
+      "name": "Groinard",
+      "x": 10,
+      "y": 5,
+      "hp": 220,
+      "pa": 3,
+      "pm": 3,
+      "damage": 45,
+      "behavior": "melee",
+      "goldDrop": 160,
+      "xpDrop": 300
+    },
+    {
+      "id": "f_d1",
+      "name": "Défoncier",
+      "x": 7,
+      "y": 9,
+      "hp": 160,
+      "pa": 3,
+      "pm": 4,
+      "damage": 50,
+      "behavior": "charge",
+      "group": "f_grp1",
+      "goldDrop": 140,
+      "xpDrop": 350
+    },
+    {
+      "id": "f_s1",
+      "name": "Sporrin",
+      "x": 9,
+      "y": 10,
+      "hp": 200,
+      "pa": 2,
+      "pm": 2,
+      "damage": 35,
+      "behavior": "fungal",
+      "group": "f_grp1",
+      "resistances": { "feu": 10, "air": 10, "eau": 10, "terre": 10 },
+      "goldDrop": 50,
+      "xpDrop": 200
+    },
+    {
+      "id": "f_r1",
+      "name": "Rumineuse",
+      "x": 4,
+      "y": 12,
+      "hp": 250,
+      "pa": 3,
+      "pm": 3,
+      "damage": 40,
+      "behavior": "spectral",
+      "resistances": { "terre": 25, "feu": 5, "air": 5, "eau": 5 },
+      "goldDrop": 180,
+      "xpDrop": 280
+    }
+  ],
   "chests": [],
   "npcs": [],
   "decorations": [
