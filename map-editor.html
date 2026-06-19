@@ -326,6 +326,11 @@ button.active { outline: 2px solid #38bdf8; outline-offset: 1px; }
     <button class="rot-btn" data-rot="180">180°</button>
     <button class="rot-btn" data-rot="270">270°</button>
   </div>
+  <div class="tg" id="scale-group">
+    <label>Taille :</label>
+    <input id="inp-scale" type="range" min="0.3" max="2.5" step="0.05" value="1" style="width:90px">
+    <span id="scale-value">100%</span>
+  </div>
   <div class="tg">
     <label>Zoom :</label>
     <input id="inp-zoom" type="number" value="100" min="25" max="300" step="5">
@@ -600,6 +605,7 @@ function initColorTiles() {
 let mode         = 'tiles';  // 'tiles' | 'decos' | 'exits'
 let selectedIdx  = -1;
 let currentRot   = 0;        // 0 | 90 | 180 | 270
+let currentScale = 1.0;      // facteur de taille des décos placées
 let eraserMode   = false;
 let isPainting   = false;
 
@@ -707,7 +713,7 @@ function render() {
         const cx = tileCenterX(c, r);
         const cy = tileCenterY(c, r);
         if (d.idx >= 0 && decos[d.idx]) {
-          drawSprite(decos[d.idx].img, cx, cy, T * 1.8, d.rot);
+          drawSprite(decos[d.idx].img, cx, cy, T * 1.8 * (d.scale ?? 1), d.rot);
         } else if (d.idx === -1) {
           // Placeholder : image pas encore chargée
           ctx.save();
@@ -968,6 +974,7 @@ function refreshPalette() {
   }
 
   document.getElementById('rot-group').style.opacity = mode === 'decos' ? '1' : '0.35';
+  document.getElementById('scale-group').style.opacity = mode === 'decos' ? '1' : '0.35';
 }
 
 function countNpcs() {
@@ -1207,6 +1214,11 @@ document.querySelectorAll('.rot-btn').forEach(btn => {
   });
 });
 
+document.getElementById('inp-scale').addEventListener('input', e => {
+  currentScale = parseFloat(e.target.value);
+  document.getElementById('scale-value').textContent = `${Math.round(currentScale * 100)}%`;
+});
+
 window.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
   if (e.key === 'r' || e.key === 'R') {
@@ -1281,8 +1293,8 @@ function paintAt(e) {
   } else {
     if (!decos[selectedIdx]) return;
     const cur = decoGrid[row][col];
-    if (cur && cur.idx === selectedIdx && cur.rot === currentRot) return;
-    decoGrid[row][col] = { idx: selectedIdx, rot: currentRot };
+    if (cur && cur.idx === selectedIdx && cur.rot === currentRot && cur.scale === currentScale) return;
+    decoGrid[row][col] = { idx: selectedIdx, rot: currentRot, scale: currentScale };
   }
   render();
 }
@@ -1314,7 +1326,7 @@ canvas.addEventListener('mousemove', e => {
   const { col, row } = s2g(sx, sy);
   const ok = inBounds(col, row);
   let info = ok ? `Col: ${col}  ·  Ligne: ${row}` : 'Col: —  ·  Ligne: —';
-  if (ok && mode === 'decos') info += `  ·  Rot: ${currentRot}°`;
+  if (ok && mode === 'decos') info += `  ·  Rot: ${currentRot}°  ·  Taille: ${Math.round(currentScale * 100)}%`;
   if (ok && mode === 'exits' && exitGrid[row][col]) info += `  ·  → ${exitGrid[row][col].targetMap}`;
   if (ok && mode === 'npcs'  && npcGrid[row][col])  info += `  ·  👤 ${npcGrid[row][col].name || npcGrid[row][col].id}`;
   document.getElementById('status').textContent = info;
@@ -1502,7 +1514,7 @@ document.getElementById('btn-export').addEventListener('click', () => {
           sprite: spriteId,
           x: c,
           y: r,
-          scale: 1.0,
+          scale: d.scale ?? 1.0,
         };
         if (d.rot !== 0) entry.rotation = d.rot;
         decorations.push(entry);
@@ -1517,7 +1529,8 @@ document.getElementById('btn-export').addEventListener('click', () => {
       const ex = exitGrid[r][c];
       if (ex) {
         exits.push({
-          from: { x: c, y: r },
+          x: c,
+          y: r,
           targetMap: ex.targetMap,
           targetX: ex.targetX,
           targetY: ex.targetY,
@@ -1631,14 +1644,14 @@ function importMap(data) {
         const label = spriteName.replace('__builtin_', '');
         const builtinIdx = decos.findIndex(b => b.isBuiltin && b.label === label);
         if (builtinIdx >= 0) {
-          decoGrid[d.y][d.x] = { idx: builtinIdx, rot: d.rotation ?? 0 };
+          decoGrid[d.y][d.x] = { idx: builtinIdx, rot: d.rotation ?? 0, scale: d.scale ?? 1 };
           continue;
         }
       }
       // idx=-1 = placeholder (image pas encore chargée)
-      decoGrid[d.y][d.x] = { idx: -1, rot: d.rotation ?? 0, spriteName };
+      decoGrid[d.y][d.x] = { idx: -1, rot: d.rotation ?? 0, scale: d.scale ?? 1, spriteName };
       if (!importedDecoSprites[spriteName]) importedDecoSprites[spriteName] = [];
-      importedDecoSprites[spriteName].push({ r: d.y, c: d.x, rot: d.rotation ?? 0 });
+      importedDecoSprites[spriteName].push({ r: d.y, c: d.x, rot: d.rotation ?? 0, scale: d.scale ?? 1 });
     }
   }
 
@@ -1753,9 +1766,9 @@ function tryMatchDecosAfterLoad() {
     const spriteName = deco.name.replace(/\.[^.]+$/, '');
     const positions  = importedDecoSprites[spriteName];
     if (!positions) return;
-    for (const { r, c, rot } of positions) {
+    for (const { r, c, rot, scale } of positions) {
       if (inBounds(c, r) && decoGrid[r][c]?.idx === -1 && decoGrid[r][c]?.spriteName === spriteName) {
-        decoGrid[r][c] = { idx: i, rot };
+        decoGrid[r][c] = { idx: i, rot, scale: scale ?? 1 };
       }
     }
     delete importedDecoSprites[spriteName];
