@@ -427,5 +427,8 @@
       "repeatDialogues": []
     }
   ],
-  "decorations": []
+  "decorations": [],
+  "blockedCoordDirs": [
+    "S"
+  ]
 }
