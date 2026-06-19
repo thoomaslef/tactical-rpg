@@ -406,13 +406,6 @@
       "targetY": 13
     },
     {
-      "x": 20,
-      "y": 8,
-      "targetMap": "map_foret",
-      "targetX": 2,
-      "targetY": 8
-    },
-    {
       "x": 21,
       "y": 7,
       "targetMap": "map_foret",
@@ -420,7 +413,78 @@
       "targetY": 7
     }
   ],
-  "spawns": [],
+  "spawns": [
+    {
+      "id": "fo_g1",
+      "name": "Groinard",
+      "x": 14,
+      "y": 4,
+      "hp": 220,
+      "pa": 3,
+      "pm": 3,
+      "damage": 45,
+      "behavior": "melee",
+      "goldDrop": 160,
+      "xpDrop": 300,
+      "resistances": {
+        "feu": 10
+      }
+    },
+    {
+      "id": "fo_d1",
+      "name": "Défoncier",
+      "x": 10,
+      "y": 6,
+      "hp": 160,
+      "pa": 3,
+      "pm": 3,
+      "damage": 60,
+      "behavior": "charge",
+      "goldDrop": 140,
+      "xpDrop": 350,
+      "resistances": {},
+      "group": "fo_grp1"
+    },
+    {
+      "id": "fo_s1",
+      "name": "Sporrin",
+      "x": 12,
+      "y": 7,
+      "hp": 200,
+      "pa": 3,
+      "pm": 2,
+      "damage": 22,
+      "behavior": "fungal",
+      "goldDrop": 50,
+      "xpDrop": 200,
+      "resistances": {
+        "feu": 10,
+        "eau": 10,
+        "air": 10,
+        "terre": 10
+      },
+      "group": "fo_grp1"
+    },
+    {
+      "id": "fo_r1",
+      "name": "Rumineuse",
+      "x": 17,
+      "y": 5,
+      "hp": 250,
+      "pa": 3,
+      "pm": 4,
+      "damage": 35,
+      "behavior": "spectral",
+      "goldDrop": 180,
+      "xpDrop": 280,
+      "resistances": {
+        "terre": 25,
+        "feu": 5,
+        "eau": 5,
+        "air": 5
+      }
+    }
+  ],
   "chests": [],
   "npcs": [
     {
@@ -1148,5 +1212,8 @@
       "y": 15,
       "scale": 1
     }
+  ],
+  "blockedCoordDirs": [
+    "E"
   ]
 }
