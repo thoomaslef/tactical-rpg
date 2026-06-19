@@ -10,6 +10,7 @@ import mapForet    from './data/map_foret.json';
 import mapForetO   from './data/map_foret_o.json';
 import mapForetE   from './data/map_foret_e.json';
 import mapForetNo  from './data/map_foret_no.json';
+import mapForetO2  from './data/map_foret_o2.json';
 
 const MAPS: Record<string, MapData> = {
   map_c:            mapC            as unknown as MapData,
@@ -23,6 +24,7 @@ const MAPS: Record<string, MapData> = {
   map_foret_o:      mapForetO       as unknown as MapData,
   map_foret_e:      mapForetE       as unknown as MapData,
   map_foret_no:     mapForetNo      as unknown as MapData,
+  map_foret_o2:     mapForetO2      as unknown as MapData,
 };
 
 export class MapManager {

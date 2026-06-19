@@ -411,6 +411,13 @@
       "targetMap": "map_foret",
       "targetX": 2,
       "targetY": 7
+    },
+    {
+      "x": 1,
+      "y": 5,
+      "targetMap": "map_foret_o2",
+      "targetX": 20,
+      "targetY": 5
     }
   ],
   "spawns": [
@@ -1214,6 +1221,7 @@
     }
   ],
   "blockedCoordDirs": [
-    "E"
+    "E",
+    "W"
   ]
 }
