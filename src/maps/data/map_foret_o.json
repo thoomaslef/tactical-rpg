@@ -1222,6 +1222,7 @@
   ],
   "blockedCoordDirs": [
     "E",
-    "W"
+    "W",
+    "N"
   ]
 }
