@@ -424,7 +424,7 @@
     {
       "id": "fo_g1",
       "name": "Groinard",
-      "x": 14,
+      "x": 13,
       "y": 4,
       "hp": 220,
       "pa": 3,
@@ -475,7 +475,7 @@
     {
       "id": "fo_r1",
       "name": "Rumineuse",
-      "x": 17,
+      "x": 16,
       "y": 5,
       "hp": 250,
       "pa": 3,
@@ -514,8 +514,8 @@
     },
     {
       "id": "receptacle_fluide",
-      "x": 7,
-      "y": 12,
+      "x": 6,
+      "y": 11,
       "name": "Réceptacle de Fluide Ancien",
       "firstDialogues": [
         "Le réceptacle vibre faiblement. Quatre emplacements semblent attendre des catalyseurs."
