@@ -413,6 +413,9 @@ export class EquipmentMenu {
     if (item.bonuses.hp)         statLine.appendChild(statTag(`❤️ +${item.bonuses.hp} PV`,      '#f87171', '#1c0808'));
     if (item.bonuses.fluide)     statLine.appendChild(statTag(`💧 +${item.bonuses.fluide} Fluide`, '#a855f7', '#160d1e'));
     if (item.bonuses.resistance) statLine.appendChild(statTag(`🛡️ +${item.bonuses.resistance} Résist.`, '#94a3b8', '#111827'));
+    if (item.bonuses.portee)     statLine.appendChild(statTag(`🎯 +${item.bonuses.portee} Portée`, '#34d399', '#062011'));
+    if (item.bonuses.terre)      statLine.appendChild(statTag(`🌿 +${item.bonuses.terre}% Terre`, '#84cc16', '#0c1a00'));
+    if (item.bonuses.feu)        statLine.appendChild(statTag(`🔥 +${item.bonuses.feu}% Feu`, '#fb923c', '#1a0800'));
     statLine.appendChild(statTag(`⚖️ ${item.weight}`, '#4a5568', '#0b0f1a'));
     info.append(nameLine, statLine);
 
