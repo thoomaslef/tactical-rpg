@@ -1405,6 +1405,103 @@ function loadFiles(files, targetArray) {
   });
 }
 
+// ═══════════════════════════════════════════════
+//  AUTO-LOAD AU DÉMARRAGE (depuis public/Assets/)
+// ═══════════════════════════════════════════════
+const TILE_FILES = [
+  'an-isometric-2-1-game-terrain-tile-featu_KWoKZw1CXUywYO-rry1Y9A_BNjBNcibSeSR6azwBXrNtw.jpeg',
+  'an-isometric-2-1-game-terrain-tile-featu_SBpqb-zKU9mr8VL2kb-95g_BNjBNcibSeSR6azwBXrNtw.jpeg',
+  'an-isometric-2-1-game-tile-featuring-a-c_bD0WuOxmXACwM4vuLEMyZw_61aQlvRISSCeKD39E-xXzQ.jpeg',
+  'an-isometric-2-1-game-tile-featuring-a-c_x9tQynu7UjuVfXsPXX1KhQ_61aQlvRISSCeKD39E-xXzQ.jpeg',
+  'an-isometric-2-1-game-tile-featuring-san_EIrcjx99XsmsurX8SMqBfA_BNjBNcibSeSR6azwBXrNtw.jpeg',
+  'an-isometric-2-1-ratio-game-tile-featuri_aZmqOSC5XQGFuADvTLIHXA_61aQlvRISSCeKD39E-xXzQ_cover.jpeg',
+  'an-isometric-2-1-ratio-game-tile-featuri_gWh1ixHUVXyHrxgEr5t1Mw_BNjBNcibSeSR6azwBXrNtw_cover.jpeg',
+  'an-isometric-2-1-ratio-game-tile-featuri_iSugYDsOUIu58yJHKqxPjA_61aQlvRISSCeKD39E-xXzQ.jpeg',
+  'isometric-2-1-game-ground-tile-dirt-path_QoI-ibwtV4ysxUhY6BrT3g_lc-tQAIaSKWfc5H3K330fA.jpeg',
+  'isometric-2-1-game-ground-tile-dirt-path_U7RJAd5DXmGbfcTRuXSKHg_lc-tQAIaSKWfc5H3K330fA_cover.jpeg',
+  'isometric-2-1-game-ground-tile-dirt-path_ae5Uovr4XVWSifuEfzZ1ag_lc-tQAIaSKWfc5H3K330fA.jpeg',
+  'isometric-2-1-game-ground-tile-dirt-path_vQQNaYx2WhWVnd8KjmIzgQ_lc-tQAIaSKWfc5H3K330fA.jpeg',
+  'isometric-2-1-game-ground-tile-lush-gree_HcAaq7sxUHSBC-AJlxNlnA_ahmSUn12RiWlaik-IAvSnA.jpeg',
+  'isometric-2-1-game-ground-tile-lush-gree_fSARJjpgXIu9zVidy_Ethw_ahmSUn12RiWlaik-IAvSnA.jpeg',
+  'isometric-2-1-game-ground-tile-lush-gree_mklmBuUvVJaEdU14FVIX9w_ahmSUn12RiWlaik-IAvSnA.jpeg',
+  'isometric-2-1-game-ground-tile-lush-gree_yNcwN7tNVjq9taMGTjYgDw_ahmSUn12RiWlaik-IAvSnA_cover.jpeg',
+  'isometric-2-1-game-ground-tile-stone-cob_7g5KHippUUmGBmOyeD8VvA_k6EKObmQSYOmsZspro7NYQ.jpeg',
+  'isometric-2-1-game-ground-tile-stone-cob_OBKfiHesUv2KZN7u6SXBpg_k6EKObmQSYOmsZspro7NYQ_cover.jpeg',
+  'isometric-2-1-game-ground-tile-stone-cob_UGD4Mt3BWuSyyf4ji7GFiw_k6EKObmQSYOmsZspro7NYQ.jpeg',
+  'isometric-2-1-game-ground-tile-stone-cob_s32P6XQ3UBG1j4cwlErNWQ_k6EKObmQSYOmsZspro7NYQ.jpeg',
+];
+const DECO_FILES = [
+  'Maison_1.png',
+  'Paille_1.png',
+  'charette.png',
+  'gate_wood.png',
+  'leafy_tree_1.png',
+  'leafy_tree_4.png',
+  'mushrooms_1.png',
+  'mushrooms_4.png',
+  'pine_tree_1.png',
+  'pine_tree_2.png',
+  'pine_tree_3.png',
+  'rock_large_1.png',
+  'rock_large_2.png',
+  'rock_large_3.png',
+  'rock_large_4.png',
+  'rock_small_1.png',
+  'rock_small_2.png',
+  'rock_small_3.png',
+  'rock_small_4.png',
+  'wall_wood.webp',
+];
+
+// Préfixe selon le mode d'ouverture : serveur Vite ('Assets/...') ou fichier local ('public/Assets/...')
+const ASSETS_PREFIX = location.protocol === 'file:' ? 'public/Assets/' : 'Assets/';
+
+function loadFromUrls(names, folder, targetArray) {
+  if (!names.length) return;
+  let done = 0;
+  names.forEach(name => {
+    fetch(ASSETS_PREFIX + folder + name)
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.blob(); })
+      .then(blob => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = ev => resolve(ev.target.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      }))
+      .then(dataUrl => new Promise((resolve, reject) => {
+        const raw = new Image();
+        raw.onload = () => resolve({ dataUrl, raw });
+        raw.onerror = reject;
+        raw.src = dataUrl;
+      }))
+      .then(({ dataUrl, raw }) => {
+        const clean = removeWhite(raw);
+        const finish = () => {
+          targetArray.push({ name, img: clean, src: clean.src, previewSrc: dataUrl });
+          done++;
+          if (done === names.length) {
+            if (selectedIdx < 0) selectedIdx = 0;
+            if (targetArray === tiles) tryMatchTilesAfterLoad();
+            if (targetArray === decos) tryMatchDecosAfterLoad();
+            refreshPalette();
+            render();
+          }
+        };
+        clean.complete && clean.naturalWidth ? finish() : (clean.onload = finish);
+      })
+      .catch(err => {
+        console.warn('Auto-load échoué :', folder + name, err);
+        done++;
+        if (done === names.length) { refreshPalette(); render(); }
+      });
+  });
+}
+
+function autoLoadAssets() {
+  loadFromUrls(TILE_FILES, 'tiles/', tiles);
+  loadFromUrls(DECO_FILES, 'sprites/', decos);
+}
+
 document.getElementById('btn-load-tiles').addEventListener('click', () => {
   if (mode !== 'tiles') switchMode('tiles');
   document.getElementById('file-tiles').click();
@@ -1785,6 +1882,7 @@ initGrids();
 resizeCanvas();
 render();
 refreshPalette();
+autoLoadAssets();
 </script>
 </body>
 </html>
