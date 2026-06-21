@@ -16,7 +16,7 @@ export const MONSTER_DROPS: MonsterDef[] = [
     icon: '🐀',
     drops: [
       { itemId: 'rat_fur',             chance: 1.00 },
-      { itemId: 'clef_antre_razmotek', chance: 0.10 },
+      { itemId: 'clef_antre_razmotek', chance: 0.20 },
       { itemId: 'casque_fer',          chance: 0.10 },
       { itemId: 'torse_fer',           chance: 0.10 },
       { itemId: 'jambieres_fer',       chance: 0.10 },

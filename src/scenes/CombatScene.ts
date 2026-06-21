@@ -1366,7 +1366,7 @@ export class CombatScene extends Phaser.Scene {
     }
     if (ratCount > 0) {
       for (let i = 0; i < ratCount; i++) {
-        if (Math.random() < 0.10) {
+        if (Math.random() < 0.20) {
           drops.push({ id: 'clef_antre_razmotek', qty: 1 });
           break; // une seule clef par combat max
         }
@@ -1407,6 +1407,20 @@ export class CombatScene extends Phaser.Scene {
     }
     for (let i = 0; i < defoncierCount; i++) {
       if (Math.random() < 0.20) drops.push({ id: 'casque_foret', qty: 1 });
+    }
+
+    // Essences — quête Alchimiste des Vestiges : 15% chacune
+    for (let i = 0; i < sporrinCount; i++) {
+      if (Math.random() < 0.15) drops.push({ id: 'spore_luminescente', qty: 1 });
+    }
+    for (let i = 0; i < defoncierCount; i++) {
+      if (Math.random() < 0.15) drops.push({ id: 'defense_fracassee', qty: 1 });
+    }
+    for (let i = 0; i < rumiCount; i++) {
+      if (Math.random() < 0.15) drops.push({ id: 'larme_spectrale', qty: 1 });
+    }
+    for (let i = 0; i < groinardCount; i++) {
+      if (Math.random() < 0.15) drops.push({ id: 'anneau_fer_tordu', qty: 1 });
     }
 
     return drops;
