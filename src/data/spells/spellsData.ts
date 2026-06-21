@@ -137,7 +137,7 @@ export const ALL_SPELLS: ISpell[] = [
     description: 'Explosion de rage — 22 à 30 dégâts Terre en zone rayon 1. Adjacent.',
   },
 
-  // ── Niveau 9 ──────────────────────────────────────────────────────────────
+  // ── Niveau 70 ─────────────────────────────────────────────────────────────
   {
     id: 'pluie_fleches',
     name: 'Pluie',
@@ -152,7 +152,7 @@ export const ALL_SPELLS: ISpell[] = [
     cooldown: 3,
     isModifiable: false,
     ignoresLineOfSight: true,  // pluie tombant du ciel : pas de LDV requise
-    learnLevel: 9,
+    learnLevel: 70,
     description: 'Pluie de flèches Eau — 10 à 16 dégâts en zone rayon 2. Portée 3–7. CD 3 tours.',
   },
 
