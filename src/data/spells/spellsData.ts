@@ -166,11 +166,11 @@ export const ALL_SPELLS: ISpell[] = [
     maxRange: 1,
     minRange: 1,
     baseDamage: { min: 35, max: 50 },
-    element: 'neutre',
+    element: 'eau',
     maxPerTurn: 1,
     isModifiable: false,
     learnLevel: 10,
-    description: 'Coup ultime — 35 à 50 dégâts. Adjacent. 1× par tour.',
+    description: 'Coup ultime — 35 à 50 dégâts Eau. Adjacent. 1× par tour.',
   },
 
   // ============================================================
