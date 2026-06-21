@@ -459,5 +459,8 @@
       ]
     }
   ],
-  "decorations": []
+  "decorations": [],
+  "blockedCoordDirs": [
+    "S"
+  ]
 }
